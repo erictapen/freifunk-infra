@@ -43,6 +43,8 @@ in
     shell = pkgs.bashInteractive;
     openssh.authorizedKeys.keys = [
       secrets.sshPublicKeys.justin
+      secrets.sshPublicKeys.jo1
+      secrets.sshPublicKeys.jo2
     ];
   };
 
