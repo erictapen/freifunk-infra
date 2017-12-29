@@ -16,9 +16,12 @@
 
     # Diagnostics
     htop
+    atop
     lm_sensors
     file
     lsof
+    jnettop
+    bmon
 
     # Build tools
     gnumake
