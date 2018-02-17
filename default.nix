@@ -10,6 +10,10 @@ in
 
 {
 
+  imports = [
+    ./batman/.
+  ];
+
   options = {
     services.gateway = {
       enable = mkOption {
@@ -25,6 +29,7 @@ in
     environment.systemPackages = [
       pkgs.hello
     ];
+    
   };
 }
 
