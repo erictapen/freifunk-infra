@@ -40,6 +40,7 @@ in {
     ./batman
     ./network
     ./rules
+    ./dhcp
   ];}).content.imports;
 
   options = {

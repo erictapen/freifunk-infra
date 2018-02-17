@@ -1,4 +1,6 @@
-{ config, pkgs, ... }:{
+{ config, pkgs, ... }:
+
+{
   services.gateway = {
     enable = true;
     network = {
@@ -11,6 +13,10 @@
         interface = "enp4s5";
         protocol = "batman-adv";
       };
+    };
+    dhcp = {
+      enable = true;
+      interface = "enp4s5";
     };
   };
 }
