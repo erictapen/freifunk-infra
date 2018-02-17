@@ -51,11 +51,11 @@ in {
     services.gateway.network = mkOption {
       default = {};
       example =
-        { wan-default = [ {
+        { "wan-default" = {
             interface = "eth0";
             policy = "wan-dhcp";
             protocol = "ip";
-          } ];
+          };
         };
       description = ''
         The configuration for each network on this gateway.
