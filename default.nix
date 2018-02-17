@@ -3,34 +3,18 @@
 with lib;
 
 let
-
   cfg = config.services.gateway;
-
-in
-
-{
-
-  imports = [
-    ./batman/.
-  ];
+in {
+  imports = (mkIf cfg.enable { imports = [
+    ./batman
+  ];}).content.imports;
 
   options = {
     services.gateway = {
-      enable = mkOption {
-        default = false;
-        description = ''
-        '';
-        type = types.bool;
-      };
+      enable = mkEnableOption "the generic Gateway service";
     };
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = [
-      pkgs.hello
-    ];
-    
   };
 }
-
-
