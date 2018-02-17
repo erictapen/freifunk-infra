@@ -7,6 +7,8 @@ let
 in {
   imports = (mkIf cfg.enable { imports = [
     ./batman
+    ./network
+    ./rules
   ];}).content.imports;
 
   options = {
