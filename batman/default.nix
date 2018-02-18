@@ -11,7 +11,7 @@ let
     f
     (filterAttrs 
       (n: v: hasPrefix "batman" v.protocol) 
-      cfg.network);
+      cfg.networks);
 in
 
 mkIf cfg.enable {

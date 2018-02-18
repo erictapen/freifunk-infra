@@ -3,7 +3,7 @@
 {
   services.gateway = {
     enable = true;
-    network = {
+    networks = {
       "wan-default" = {
         interface = "enp0s25";
         policy = "wan-dhcp";

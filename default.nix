@@ -4,7 +4,7 @@ with lib;
 
 let
   cfg = config.services.gateway;
-  network = attrValues cfg.network;
+  networks = attrValues cfg.networks;
   networkOpts = { name, ... }: {
 
     options = {
@@ -48,7 +48,7 @@ in {
       enable = mkEnableOption "the generic Gateway service";
     };
 
-    services.gateway.network = mkOption {
+    services.gateway.networks = mkOption {
       default = {};
       example =
         { "wan-default" = {
