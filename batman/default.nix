@@ -1,8 +1,11 @@
 { config, pkgs, lib, ... }:
+
 with lib;
 let
-
   cfg = config.services.gateway;
+
+  getAddress = ip: head (splitString "/" ip);
+  getPrefix  = ip: toInt (elemAt (splitString "/" ip) 1);
 in
 
 mkIf cfg.enable {
@@ -32,9 +35,8 @@ mkIf cfg.enable {
   };
 
   networking.interfaces."bat-lan" = {
-    ipAddress = "10.190.135.1";
-    prefixLength = 21;
+    ipAddress = "172.16.200.255";
+    prefixLength = 24;
   };
-
   
 }
