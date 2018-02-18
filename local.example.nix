@@ -20,4 +20,17 @@
       interface = "bat-lan";
     };
   };
+
+  networking.vlans =
+  {
+    "enp4s5.6" = {
+      id = 6;
+      interface = "enp4s5";
+    };
+    "enp4s5.9" = {
+      id = 9;
+      interface = "enp4s5";
+    };
+  };
+
 }
