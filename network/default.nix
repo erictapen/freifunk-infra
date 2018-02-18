@@ -4,7 +4,7 @@ with lib;
 
 let
   cfg = config.services.gateway;
-  lanInterface = cfg.network.lan-default.interface;
+  lanInterface = "bat-lan";
   wanInterface = cfg.network.wan-default.interface;
   openTCPPorts = [
     22
@@ -29,7 +29,7 @@ mkIf cfg.enable {
       enable = true;
       allowedTCPPorts = openTCPPorts;
       allowedTCPPortRanges = [
-        { from = 6543; to = 6544; } # MythTV
+      # { from = 6543; to = 6544; } # MythTV
       # { from = 9101; to = 9103; } # bacula
       ];
       allowedUDPPorts = openUDPPorts;
@@ -38,7 +38,7 @@ mkIf cfg.enable {
     #  { from = 1714; to = 1764; }
     # ];
       allowPing = true;
-      rejectPackets = false;
+    # rejectPackets = false;
     # extraCommands =
     # ''
     #  ip46tables -A nixos-fw -i ve-+ -p tcp --dport 4713 -j nixos-fw-accept;
@@ -52,8 +52,6 @@ mkIf cfg.enable {
     interfaces = {
       ${lanInterface} = {
         name = "${lanInterface}";
-        ipAddress = "192.168.0.1";
-        prefixLength = 24;
         useDHCP = false;
       };
       ${wanInterface} = {
@@ -68,7 +66,7 @@ mkIf cfg.enable {
       externalInterface =  "${wanInterface}";
       internalInterfaces = [ "${lanInterface}" ];
       forwardPorts = [
-        { destination = "192.168.1.212:873"; sourcePort = 873; }
+    #   { destination = "192.168.1.212:873"; sourcePort = 873; }
     #   { destination = "192.168.1.1:9050"; sourcePort = 9050; }
     #   { destination = "192.168.1.1:22"; sourcePort = 22; }
       ];
