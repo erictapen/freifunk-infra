@@ -6,6 +6,12 @@ let
 
   getAddress = ip: head (splitString "/" ip);
   getPrefix  = ip: toInt (elemAt (splitString "/" ip) 1);
+
+  mapBatNets = f: mapAttrs' 
+    f
+    (filterAttrs 
+      (n: v: hasPrefix "batman" v.protocol) 
+      cfg.network);
 in
 
 mkIf cfg.enable {
@@ -17,26 +23,29 @@ mkIf cfg.enable {
   environment.systemPackages = with pkgs;[
     batctl
   ];
-
-  systemd.services = {
-    "batman-lan" = {
-      after = [ "network-interfaces.target" ];
-      wantedBy = [ "multi-user.target" ];
-      script = ''
-        # TODO enp4s5 kann später z.B. durch cfg.network.lan."ff-local".interface ersetzt werden 
-        ${pkgs.batctl}/bin/batctl -m "bat-lan" interface add enp4s5
-        ${pkgs.batctl}/bin/batctl -m "bat-lan" gw_mode server
-      '';
-      serviceConfig.Type = "oneshot";
-    };
+  systemd.services = mapBatNets (name: network: 
+    nameValuePair
+      "batman-${name}" 
+      {
+        after = [ "network-interfaces.target" ];
+        wantedBy = [ "multi-user.target" ];
+        script = ''
+          ${pkgs.batctl}/bin/batctl -m "bat-${name}" interface add ${network.interface}
+          ${pkgs.batctl}/bin/batctl -m "bat-${name}" gw_mode server
+        '';
+        serviceConfig.Type = "oneshot";
+      }
+  );
     
-    # "batman-wan" = {
-    # };
-  };
+  networking.interfaces = mapBatNets (name: network: 
+    nameValuePair
+      "bat-${name}" 
+      {
+        ipAddress = "172.16.200.255";
+        prefixLength = 24;
+      }
+  );
 
-  networking.interfaces."bat-lan" = {
-    ipAddress = "172.16.200.255";
-    prefixLength = 24;
-  };
+}  
+
   
-}
