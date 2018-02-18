@@ -41,6 +41,7 @@ in {
     ./network
     ./rules
     ./dhcp
+    ./dns
   ];}).content.imports;
 
   options = {
