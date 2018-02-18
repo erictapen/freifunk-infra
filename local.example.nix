@@ -4,19 +4,20 @@
   services.gateway = {
     enable = true;
     network = {
-      "wan-dhcp" = {
+      "wan-default" = {
         interface = "enp0s25";
         policy = "wan-dhcp";
         protocol = "ip";
       };
-      "ff-mesh" = {
+      "lan-default" = {
         interface = "enp4s5";
-        protocol = "batman-adv";
+        policy = "lan-batman";
+        protocol = "batman";
       };
     };
     dhcp = {
       enable = true;
-      interface = "enp4s5";
+      interface = "bat-lan";
     };
   };
 }
