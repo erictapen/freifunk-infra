@@ -6,13 +6,15 @@
     networks = {
       "wan-default" = {
         interface = "enp0s25";
-        policy = "wan-dhcp";
-        protocol = "ip";
+        protocol = "freifunk-stuttgart";
+      };
+      "vpn-ffs" = {
+        interface = "enp0s25";
       };
       "lan-default" = {
         interface = "enp4s5";
-        policy = "lan-batman";
-        protocol = "batman";
+        policy = "lan-dhcp";
+        protocol = "ip";
       };
     };
     dhcp = {
