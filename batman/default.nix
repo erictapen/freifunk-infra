@@ -25,13 +25,13 @@ mkIf cfg.enable {
   ];
   systemd.services = mapBatNets (name: network: 
     nameValuePair
-      "batman-${name}" 
+      "br-client-${name}"
       {
         after = [ "network-interfaces.target" ];
         wantedBy = [ "multi-user.target" ];
         script = ''
-          ${pkgs.batctl}/bin/batctl -m "bat-${name}" interface add ${network.interface}
-          ${pkgs.batctl}/bin/batctl -m "bat-${name}" gw_mode server
+          ${pkgs.batctl}/bin/batctl -m "br-client-${name}" interface add ${network.interface}
+          ${pkgs.batctl}/bin/batctl -m "br-client-${name}" gw_mode server
         '';
         serviceConfig.Type = "oneshot";
       }

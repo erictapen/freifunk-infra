@@ -9,7 +9,7 @@
         policy = "wan-dhcp";
         protocol = "ip";
       };
-      "lan-default" = {
+      "local" = {
         interface = "enp4s5";
         policy = "lan-batman";
         protocol = "batman";
@@ -17,7 +17,10 @@
     };
     dhcp = {
       enable = true;
-      interface = "bat-lan";
+      interface = "br-client-local";
+    };
+    dns = {
+      enable = true;
     };
   };
 

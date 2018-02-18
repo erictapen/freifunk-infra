@@ -4,7 +4,7 @@ with lib;
 
 let
   cfg = config.services.gateway;
-  lanInterface = "bat-lan";
+  lanInterface = "br-client-local";
   wanInterface = cfg.networks.wan-default.interface;
   openTCPPorts = [
     22
