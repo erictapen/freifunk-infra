@@ -19,6 +19,10 @@
       enable = true;
       interface = "bat-lan";
     };
+    dns = {
+      enable = true;
+      backend = "pdns-recursor";
+    };
   };
 
   networking.vlans =
