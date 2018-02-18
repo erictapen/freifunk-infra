@@ -5,20 +5,22 @@ with lib;
 let
   cfg = config.services.gateway.dhcp;
   # Yes, this is dirty... (builds at evaluation)
-  dhcpConfig = cidrRange: pkgs.runCommand
+  runScript = script: cidrRange: pkgs.runCommand
     "dhcp-config"
     {
-      script = builtins.readFile ./generate-config.py;
+      script = builtins.readFile script;
       passAsFile = [ "script" ];
     }
     ''
       ${pkgs.python3.withPackages (x: [x.netaddr])}/bin/python \
         $scriptPath ${cidrRange} > $out
     '';
-  dhcp4Config = dhcpConfig cfg.dhcp4Range;
-  dhcp6Config = dhcpConfig cfg.dhcp6Range;
+  dhcp4Config = runScript ./generate-config.py cfg.dhcp4Range;
+  dhcp6Config = runScript ./generate-config.py cfg.dhcp6Range;
   dhcp4ConfigText = builtins.readFile dhcp4Config;
   dhcp6ConfigText = builtins.readFile dhcp6Config;
+  getGwIpAddress = dhcpRange: builtins.readFile (
+    runScript ./get-gateway-address.py dhcpRange);
 in {
   options.services.gateway.dhcp = {
     enable = mkEnableOption "a DHCP server";
@@ -55,11 +57,11 @@ in {
         getPrefix  = ip: toInt (elemAt (splitString "/" ip) 1);
       in {
       ip4 = [ {
-        address = (getAddress cfg.dhcp4Range);
+        address = (getGwIpAddress cfg.dhcp4Range);
         prefixLength = (getPrefix cfg.dhcp4Range);
       } ];
       ip6 = [ {
-        address = (getAddress cfg.dhcp6Range);
+        address = (getGwIpAddress cfg.dhcp6Range);
         prefixLength = (getPrefix cfg.dhcp6Range);
       } ];
     };
