@@ -10,13 +10,13 @@ with import <nixpkgs> {};
     config = (import <nixpkgs/nixos/lib/eval-config.nix> {
       modules = [ 
         # This is where my config lives
-        ./deploy/configuration.nix 
+        ./images/futro-s550/configuration.nix 
       ];
       # Cross building fails atm...
       # system = "i686-linux";
     }).config;
     # Can we bring this down to << 1024?
-    diskSize = 2048;
+    diskSize = 940;
     installBootLoader = false;
   };
 
