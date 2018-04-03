@@ -43,6 +43,35 @@ let
 
   #   buildInputs = with pkgs;[ cmake pkgconfig json_c ];
   # };
+
+  # Die Maximum Transfer Unit der fastd-Verbindung  
+  mtu = 1340;
+
+  # fastd config for the Onboarding peer
+  # TODO stimmt der key?
+  fastd-peer-onboarder = builtins.toFile "offloader.conf" ''
+    key "1af6a5d41d866823e5712e8d9af42080397ad52bdd8664a11ca94225629398a3";
+    remote ipv4 "gw07.gw.freifunk-stuttgart.de" port 10299;
+  '';
+
+  # The static part of the fastd config file. The dynamic part contains the VPN keys.
+  fastd-static-config = builtins.toFile "fastd.conf" ''
+    interface "ffs-mesh-vpn";
+    mtu ${builtins.toString mtu};
+    include /var/lib/freifunk-vpn/ffs/fastd_secret.conf;
+    include peer "${fastd-peer-onboarder}" as "onboarder";
+
+    # TODO remove?
+    # Support salsa2012+umac and null methods, prefer salsa2012+umac
+    method "salsa2012+umac";
+    method "null";
+    drop capabilities no;
+
+    bind 0.0.0.0:10000;
+
+    # Include peers from the directory 'peers'
+    include peers from "peers";
+  '';
 in
 
 {
@@ -85,6 +114,21 @@ in
         file = nodeinfo;
         urlPath = "/cgi-bin/nodeinfo";
       }];
+    };
+
+    # This service checks wether an already generated fastd secret is available
+    # and if not, generates one. Delete
+    # /var/lib/freifunk-vpn/ffs/fastd_secret.conf to force the generation of a
+    # new key.
+    systemd.services."ffs-fastd-generate-secret" = {
+      serviceConfig.Type = "oneshot";
+      script = ''
+        if [ ! -d /var/lib/freifunk-vpn/ffs/fastd_secret.conf ]; then
+          mkdir -p /var/lib/freifunk-vpn/ffs/
+          FASTD_SEC=$(fastd --generate-key --machine-readable)
+          echo "secret $FASTD_SEC" > /var/lib/freifunk-vpn/ffs/fastd_secret.conf
+        fi
+      '';
     };
 
     # networking.interfaces."ffs-mesh-vpn".macAddress = cfg.mac;
