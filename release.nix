@@ -16,7 +16,7 @@ with import <nixpkgs> {};
       # system = "i686-linux";
     }).config;
     # Can we bring this down to << 1024?
-    diskSize = 940;
+    diskSize = 2 * 1024;
     installBootLoader = false;
   };
 
