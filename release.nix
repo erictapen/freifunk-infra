@@ -13,7 +13,7 @@ with import <nixpkgs> {};
         ./images/futro-s550/configuration.nix 
       ];
       # Cross building fails atm...
-      # system = "i686-linux";
+      system = "i686-linux";
     }).config;
     # Can we bring this down to << 1024?
     diskSize = 2 * 1024;
