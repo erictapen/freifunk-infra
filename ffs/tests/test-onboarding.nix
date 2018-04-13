@@ -6,10 +6,6 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
 {
   name = "onboarding";
 
-  meta = with pkgs.stdenv.lib.maintainers; {
-    maintainers = [ erictapen ];
-  };
-
   nodes = {
 
     ffsOnboarder =
