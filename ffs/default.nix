@@ -48,11 +48,7 @@ let
   mtu = 1340;
 
   # fastd config for the Onboarding peer
-  # TODO stimmt der key?
-  fastd-peer-onboarder = builtins.toFile "offloader.conf" ''
-    key "1af6a5d41d866823e5712e8d9af42080397ad52bdd8664a11ca94225629398a3";
-    remote ipv4 "gw07.gw.freifunk-stuttgart.de" port 10299;
-  '';
+  fastd-peer-onboarder = builtins.toFile "offloader.conf" cfg.fastd-peer-onboarder;
 
   # The static part of the fastd config file. The dynamic part contains the VPN keys.
   fastd-static-config = builtins.toFile "fastd.conf" ''
@@ -90,6 +86,16 @@ in
         type = types.str;
         example = "89:43:3d:c6:f6:09";
         description = "MAC-Adresse, die gleichzeitig auch Node-ID ist.";
+      };
+
+      fastd-peer-onboarder = mkOption {
+        type = types.str;
+        # TODO stimmt der key?
+        default = ''
+          key "1af6a5d41d866823e5712e8d9af42080397ad52bdd8664a11ca94225629398a3";
+          remote ipv4 "gw07.gw.freifunk-stuttgart.de" port 10299;
+        '';
+        description = "fastd-Peer-Config, die Key und Ort des Onboarders angibt.";
       };
 
     };
