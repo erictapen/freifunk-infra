@@ -54,7 +54,7 @@ let
   fastd-static-config = builtins.toFile "fastd.conf" ''
     interface "ffs-mesh-vpn";
     mtu ${builtins.toString mtu};
-    include /var/lib/freifunk-vpn/ffs/fastd_secret.conf;
+    include "/var/lib/freifunk-vpn/ffs/fastd_secret.conf";
     include peer "${fastd-peer-onboarder}" as "onboarder";
 
     # TODO remove?
@@ -122,6 +122,12 @@ in
       }];
     };
 
+    environment.etc = {
+      "freifunk-vpn/ffs/fastd.conf" = {
+        source = fastd-static-config;
+      };
+    };
+
     # This service checks wether an already generated fastd secret is available
     # and if not, generates one. Delete
     # /var/lib/freifunk-vpn/ffs/fastd_secret.conf to force the generation of a
@@ -134,7 +140,7 @@ in
         if [ ! -d /var/lib/freifunk-vpn/ffs/fastd_secret.conf ]; then
           mkdir -p /var/lib/freifunk-vpn/ffs/
           FASTD_SEC=$(${pkgs.fastd}/bin/fastd --generate-key --machine-readable)
-          echo "secret $FASTD_SEC" > /var/lib/freifunk-vpn/ffs/fastd_secret.conf
+          echo "secret \"$FASTD_SEC\";" > /var/lib/freifunk-vpn/ffs/fastd_secret.conf
         fi
       '';
     };
