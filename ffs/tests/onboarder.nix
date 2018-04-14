@@ -13,6 +13,7 @@ let
     rev = "0e393c7b1baf1f09dd594d4b801950420287f805";
     sha256 = "1g9pzgvhq5crh4kh3yr0brbprbfks1frmz2w352jz7hnj7lkvhak";
   } + "/Onboarding";
+
   fastd-config = pkgs.writeTextFile {
     name = "fastd.conf";
     text = ''

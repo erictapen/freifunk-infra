@@ -122,10 +122,12 @@ in
     # new key.
     systemd.services."ffs-fastd-generate-secret" = {
       serviceConfig.Type = "oneshot";
+      after = [ "network-interfaces.target" ];
+      wantedBy = [ "multi-user.target" ];
       script = ''
         if [ ! -d /var/lib/freifunk-vpn/ffs/fastd_secret.conf ]; then
           mkdir -p /var/lib/freifunk-vpn/ffs/
-          FASTD_SEC=$(fastd --generate-key --machine-readable)
+          FASTD_SEC=$(${pkgs.fastd}/bin/fastd --generate-key --machine-readable)
           echo "secret $FASTD_SEC" > /var/lib/freifunk-vpn/ffs/fastd_secret.conf
         fi
       '';

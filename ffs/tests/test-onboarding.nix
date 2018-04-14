@@ -19,9 +19,15 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
     ffsNode =
       { config, pkgs, lib, ... }:
       {
-        environment.systemPackages = with pkgs; [
-          fastd
+        imports = [
+          ../default.nix
         ];
+
+        services.freifunk-stuttgart = {
+          enable = true;
+          kontaktAdresse = "mail@example.org";
+          mac = "89:43:3d:c6:f6:09";
+        };
       };
 
   };
@@ -36,6 +42,10 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
 
     $ffsOnboarder->waitUntilSucceeds("batctl -m batman interface");
     $ffsOnboarder->fail("batctl interface");
+
+
+    $ffsNode->start;
+    $ffsNode->waitForFile("/var/lib/freifunk-vpn/ffs/fastd_secret.conf");
   '';
   
 
