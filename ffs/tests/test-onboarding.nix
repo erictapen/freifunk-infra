@@ -19,6 +19,9 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
     ffsNode =
       { config, pkgs, lib, ... }:
       {
+        environment.systemPackages = with pkgs; [
+          fastd
+        ];
       };
 
   };
@@ -27,7 +30,13 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
     $ffsOnboarder->start;
 
     $ffsOnboarder->waitForUnit("fastd.service");
+
+    # This would fail:
+    # $ffsOnboarder->waitForUnit("batman.service");
+
+    $ffsOnboarder->waitUntilSucceeds("batctl -m batman interface");
+    $ffsOnboarder->fail("batctl interface");
   '';
   
-    #$ffsOnboarder->waitForUnit("batman.service");
+
 })
