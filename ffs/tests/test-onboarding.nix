@@ -47,7 +47,6 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
     $ffsOnboarder->waitUntilSucceeds("batctl -m batman interface");
     $ffsOnboarder->fail("batctl interface");
 
-
     $ffsNode->start;
     $ffsNode->waitForFile("/var/lib/freifunk-vpn/ffs/fastd_secret.conf");
   '';

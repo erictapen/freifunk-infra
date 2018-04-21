@@ -66,7 +66,7 @@ let
     bind 0.0.0.0:10000;
 
     # Include peers from the directory 'peers'
-    include peers from "peers";
+    # include peers from "peers";
   '';
 in
 
@@ -132,17 +132,33 @@ in
     # and if not, generates one. Delete
     # /var/lib/freifunk-vpn/ffs/fastd_secret.conf to force the generation of a
     # new key.
-    systemd.services."ffs-fastd-generate-secret" = {
-      serviceConfig.Type = "oneshot";
-      after = [ "network-interfaces.target" ];
-      wantedBy = [ "multi-user.target" ];
-      script = ''
-        if [ ! -d /var/lib/freifunk-vpn/ffs/fastd_secret.conf ]; then
-          mkdir -p /var/lib/freifunk-vpn/ffs/
-          FASTD_SEC=$(${pkgs.fastd}/bin/fastd --generate-key --machine-readable)
-          echo "secret \"$FASTD_SEC\";" > /var/lib/freifunk-vpn/ffs/fastd_secret.conf
-        fi
-      '';
+    systemd.services = {
+      "ffs-fastd-generate-secret" = {
+        serviceConfig.Type = "oneshot";
+        after = [ "network-interfaces.target" ];
+        wantedBy = [ "fastd.service" ];
+        script = ''
+          if [ ! -d /var/lib/freifunk-vpn/ffs/fastd_secret.conf ]; then
+            mkdir -p /var/lib/freifunk-vpn/ffs/
+            FASTD_SEC=$(${pkgs.fastd}/bin/fastd --generate-key --machine-readable)
+            echo "secret \"$FASTD_SEC\";" > /var/lib/freifunk-vpn/ffs/fastd_secret.conf
+          fi
+        '';
+      };
+      "fastd" = {
+        after = [ "ffs-fastd-generate-secret.service" ];
+        wantedBy = [ "batman.service" ];
+        script = ''
+          exec ${pkgs.fastd}/bin/fastd -c /etc/freifunk-vpn/ffs/fastd.conf
+        '';
+      };
+      "batman" = {
+        after = [ "fastd.service" ];
+        wantedBy = [ "multi-user.target" ];
+        script = ''
+          ${pkgs.batctl}/bin/batctl -m batman interface add ffs-mesh-vpn
+        '';
+      };
     };
 
     # networking.interfaces."ffs-mesh-vpn".macAddress = cfg.mac;
