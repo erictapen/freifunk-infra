@@ -68,6 +68,10 @@ in
     after = [ "network-interfaces.target" ];
     wantedBy = [ "multi-user.target" ];
     script = ''
+      mkdir -p /var/freifunk/logs/
+      mkdir -p /var/freifunk/peers-ffs/
+      mkdir -p /var/freifunk/database/
+      mkdir -p /var/freifunk/blacklist/
       ${pkgs.fastd}/bin/fastd --config ${fastd-config}
     '';
     # serviceConfig.Type = "oneshot";
