@@ -12,6 +12,7 @@ let
     };
 
     patches = [
+      (import ./make-binary-paths-patch.nix { inherit pkgs; })
     ];
 
     buildInputs = with pkgs.python3Packages;[
