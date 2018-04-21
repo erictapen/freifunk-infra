@@ -1,18 +1,35 @@
 { config, pkgs, lib, ... }:
 
 let
-  # onboarding-repo = pkgs.fetchFromGitHub {
-  #   owner = "FFS-Roland";
-  #   repo = "FFS-Tools";
-  #   rev = "0e393c7b1baf1f09dd594d4b801950420287f805";
-  #   sha256 = "1834yj2vgs4dasdfnppc8iw8ll3yif948biq9hj0sbpsa2d8y44k";
-  # };
-  onboarder = pkgs.fetchFromGitHub {
-    owner = "FFS-Roland";
-    repo = "FFS-Tools";
-    rev = "0e393c7b1baf1f09dd594d4b801950420287f805";
-    sha256 = "1g9pzgvhq5crh4kh3yr0brbprbfks1frmz2w352jz7hnj7lkvhak";
-  } + "/Onboarding";
+  onboarder = pkgs.stdenv.mkDerivation {
+    name = "onboarder";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "erictapen";
+      repo = "FFS-Tools";
+      rev = "41bb7bab5ae87daa6ddf9351993d102213d36e65";
+      sha256 = "0m4f7v51m1qnjzs36rbxscix16if7qygr8kvhdp9p266ac1f0gv7";
+    };
+
+    patches = [
+    ];
+
+    buildInputs = with pkgs.python3Packages;[
+      psutil
+      GitPython
+      dns
+      shapely
+    ];
+
+    dontBuild = true;
+
+    installPhase = ''
+      mkdir -p $out/bin
+      cp Onboarding/ffs-Onboarding.py $out/bin
+      cp Onboarding/vpnXXXXX-on-establish.sh $out/bin
+      cp Onboarding/vpnXXXXX-on-verify.sh $out/bin
+    '';
+  };
 
   fastd-config = pkgs.writeTextFile {
     name = "fastd.conf";
@@ -27,8 +44,8 @@ let
       
       peer limit 1;
       
-      on verify    "${onboarder}/vpnXXXXX-on-verify.sh";
-      on establish "${onboarder}/vpnXXXXX-on-establish.sh";
+      on verify    "${onboarder}/bin/vpnXXXXX-on-verify.sh";
+      on establish "${onboarder}/bin/vpnXXXXX-on-establish.sh";
 
       # Public: 6b02214cb4eab0ea90316e1ca5cb37039b4eae4665ccd291887456b7f3f7b73d
       secret "10f058c6744c3d3f5344521367fbb74faea131ccb7f4d3eb2411a61c7c18604d";
@@ -53,6 +70,7 @@ in
     batctl
     fastd
     vim
+    onboarder
   ];
  
   systemd.services."batman" = {
