@@ -49,6 +49,13 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
 
     $ffsNode->start;
     $ffsNode->waitForFile("/var/lib/freifunk-vpn/ffs/fastd_secret.conf");
+
+    # Make sure the fastd connection is up. As the connection itself is
+    # supposed to terminate after a while, it is not easy to test it by itself,
+    # so we check, wether a certain log file appears. The *_established.log
+    # should only appear, if the "on verify" script exited with 0 and the
+    # connection was established.
+    $ffsOnboarder->waitUntilSucceeds("ls /var/freifunk/logs/vpn*_established.log");
   '';
   
 
