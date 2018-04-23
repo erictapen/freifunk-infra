@@ -15,20 +15,26 @@ let
       (import ./make-binary-paths-patch.nix { inherit pkgs; })
     ];
 
-    buildInputs = with pkgs.python3Packages;[
+    pythonPath = with pkgs.python3Packages;[
       psutil
       GitPython
       dns
       shapely
     ];
+    buildInputs = with pkgs.python3Packages; [
+      wrapPython
+    ];
 
     dontBuild = true;
 
     installPhase = ''
+
       mkdir -p $out/bin
       cp Onboarding/ffs-Onboarding.py $out/bin
       cp Onboarding/vpnXXXXX-on-establish.sh $out/bin
       cp Onboarding/vpnXXXXX-on-verify.sh $out/bin
+
+      wrapPythonPrograms
     '';
   };
 
