@@ -13,35 +13,6 @@ let
 
     patches = [
       (import ./make-binary-paths-patch.nix { inherit pkgs; })
-      (builtins.toFile "debug.patch" ''
-        diff --git a/Onboarding/vpnXXXXX-on-establish.sh b/Onboarding/vpnXXXXX-on-establish.sh
-        index 5fe57d0..8147474 100755
-        --- a/Onboarding/vpnXXXXX-on-establish.sh
-        +++ b/Onboarding/vpnXXXXX-on-establish.sh
-        @@ -39,6 +39,8 @@
-         #                                                                                         #
-         ###########################################################################################
-        
-        +touch /var/freifunk/on-establish-ran
-        +
-         LOGFILE=/var/freifunk/logs/''${INTERFACE}_$(date +%y%m%d)_established.log
-        
-        
-        diff --git a/Onboarding/vpnXXXXX-on-verify.sh b/Onboarding/vpnXXXXX-on-verify.sh
-        index 8fffb0f..45ad114 100755
-        --- a/Onboarding/vpnXXXXX-on-verify.sh
-        +++ b/Onboarding/vpnXXXXX-on-verify.sh
-        @@ -42,6 +42,8 @@
-         #                                                                                         #
-         ###########################################################################################
-        
-        +touch /var/freifunk/on-verify-ran
-        +
-         LOGFILE=/var/freifunk/logs/wpnXXXXX_$(date +%y%m%d)_verify.log
-        
-         #exit 1    # for blocking during test phase only - will be removed later!
-        
-      '')
     ];
 
     buildInputs = with pkgs.python3Packages;[
@@ -67,7 +38,7 @@ let
       log level debug2;
 
       interface "vpn10299";
-      bind any:10299 interface "eth0";
+      bind any:10299;
       status socket "/var/run/fastd-vpn10299.status";
       
       method "salsa2012+umac";
