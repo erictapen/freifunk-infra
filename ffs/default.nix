@@ -52,6 +52,8 @@ let
 
   # The static part of the fastd config file. The dynamic part contains the VPN keys.
   fastd-static-config = builtins.toFile "fastd.conf" ''
+    log level debug2;
+
     interface "ffs-mesh-vpn";
     mtu ${builtins.toString mtu};
     include "/var/lib/freifunk-vpn/ffs/fastd_secret.conf";

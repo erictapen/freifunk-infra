@@ -7,8 +7,8 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "erictapen";
       repo = "FFS-Tools";
-      rev = "41bb7bab5ae87daa6ddf9351993d102213d36e65";
-      sha256 = "0m4f7v51m1qnjzs36rbxscix16if7qygr8kvhdp9p266ac1f0gv7";
+      rev = "0209a15c9b8822b0cf80c35c728350fe79e93049";
+      sha256 = "0y6y8l4p0lcjq631ssy0k80gr9bmwzv1d6xvzcl6jxddnzx1nr9y";
     };
 
     patches = [
@@ -80,6 +80,7 @@ in
     fastd
     vim
     onboarder
+    tmux
   ];
 
   systemd.services = {
