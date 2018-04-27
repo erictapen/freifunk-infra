@@ -122,6 +122,10 @@ in
         file = nodeinfo;
         urlPath = "/cgi-bin/nodeinfo";
       }];
+      listen = {
+        ip = ":::";
+        port = "80";
+      };
     };
 
     networking.firewall = {
