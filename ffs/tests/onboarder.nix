@@ -145,7 +145,7 @@ in
 
   systemd.services = {
     "fastd" = {
-      after = [ "openssh.service" "gitolite.service" "network.target" ];
+      after = [ "sshd.service" "gitolite-init.service" "network.target" ];
       wantedBy = [ "batman.service" ];
       path = with pkgs;[
         procps
@@ -153,9 +153,6 @@ in
         onboarder
       ];
       preStart = ''
-        # This is stupid. TODO
-        sleep 20
-
         # for debugging
         rm -rf /root/gitolite-admin
         rm -rf /var/freifunk/peers-ffs
