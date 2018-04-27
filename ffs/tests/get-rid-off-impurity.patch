@@ -1,5 +1,5 @@
 diff --git a/Onboarding/ffs-Onboarding.py b/Onboarding/ffs-Onboarding.py
-index 3704210..27e1198 100755
+index 3704210..e578ba1 100755
 --- a/Onboarding/ffs-Onboarding.py
 +++ b/Onboarding/ffs-Onboarding.py
 @@ -75,6 +75,7 @@ from shapely.geometry import Point
@@ -10,10 +10,12 @@ index 3704210..27e1198 100755
  
  #----- Needed Data-Files -----
  AccountFileName = '.Accounts.json'
-@@ -241,6 +242,7 @@ def getNodeFastdMAC(FastdStatusSocket):
+@@ -240,7 +241,8 @@ def getNodeFastdMAC(FastdStatusSocket):
+                 StatusData += tmpData
  
              FastdLiveStatus.close()
- #            print('... Fastd-Data ->',StatusData)
+-#            print('... Fastd-Data ->',StatusData)
++            print('... Fastd-Data ->',StatusData)
 +            print("Got " + str(len(StatusData)) + "byte from fastd status socket")
  
              if StatusData != '':

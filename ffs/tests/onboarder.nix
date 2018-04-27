@@ -7,8 +7,8 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "erictapen";
       repo = "FFS-Tools";
-      rev = "d8e879058e8d6502990a190adc09b7a9e999733b";
-      sha256 = "0h3hzwgp1s59bv4qcbwb32y1xk2pjmsmz9dlk6bsi9j2djmcqc8h";
+      rev = "72cd7c337270064476de4bf6151deb137ed6aaca";
+      sha256 = "01yh5czsjfkmj7dm2mraq5xsbcafzmin0wbj3b2z10961af2yinz";
     };
 
     patches = [
@@ -150,6 +150,7 @@ in
       path = with pkgs;[
         procps
         git
+        onboarder
       ];
       preStart = ''
         # This is stupid. TODO
