@@ -50,6 +50,8 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
 
     $ffsNode->start;
     $ffsNode->waitForFile("/var/lib/freifunk-vpn/ffs/fastd_secret.conf");
+    $ffsNode->waitForFile("/var/lib/freifunk-vpn/ffs/nodeid");
+    $ffsNode->waitForFile("/var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo");
 
     # Make sure the fastd connection is up. As the connection itself is
     # supposed to terminate after a while, it is not easy to test it by itself,

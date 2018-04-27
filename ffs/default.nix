@@ -5,21 +5,6 @@ with lib;
 let
   cfg = config.services.freifunk-stuttgart;
 
-  # nodeinfo = builtins.toFile "nodeinfo.json" (builtins.toJSON {
-  #   software = {
-  #     firmware = {
-  #       # base = "gluon-v2016.2.7";
-  #       release ="1.3+2017-09-13-g.d722c26-s.b0e5e48";
-  #       isGluon = false;
-  #     };
-  #   };
-  #   owner = {
-  #     contact = cfg.kontaktAdresse;
-  #     #contact = "mail@example.org";
-  #   };
-  #   "node_id" = nodeid;
-  # });
-
   # TODO: https://github.com/hopglass/node-respondd
   # respondd = pkgs.stdenv.mkDerivation {
   #   name = "respondd";
@@ -33,6 +18,17 @@ let
 
   #   buildInputs = with pkgs;[ cmake pkgconfig json_c ];
   # };
+
+  derive-nodeinfo = pkgs.stdenv.mkDerivation {
+    name = "derive-nodeinfo";
+    buildInputs = with pkgs; [ python3 ];
+    dontBuild = true;
+    src = ./derive-nodeinfo; 
+    installPhase = ''
+      mkdir -p $out/bin
+      cp derive-nodeinfo.py $out/bin/
+    '';
+  }; 
 
   # Die Maximum Transfer Unit der fastd-Verbindung  
   fastd-mtu = 1340;
@@ -110,19 +106,6 @@ in
       fastd
     ];
 
-    services.httpd = {
-      enable = true;
-      adminAddr = cfg.kontaktAdresse;
-      servedFiles = [{
-        file = "/var/lib/freifunk-vpn/ffs/nodeinfo";
-        urlPath = "/cgi-bin/nodeinfo";
-      }];
-      listen = [{
-        ip = ":::";
-        port = 80;
-      }];
-    };
-
     networking.firewall = {
       allowedTCPPorts = [
         80 # HTTP
@@ -144,7 +127,10 @@ in
     # be derived from the node ID every time the service starts.
     systemd.services = {
       "ffs-generate-state" = {
-        serviceConfig.Type = "oneshot";
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
         after = [ "network-interfaces.target" ];
         wantedBy = [ "ffs-fastd.service" ];
         script = ''
@@ -159,15 +145,31 @@ in
             ${pkgs.xxd}/bin/xxd -l 6 -p /dev/random > /var/lib/freifunk-vpn/ffs/nodeid
           fi
           echo "Derive MAC and IPv6 addresses from nodeid..."
-          generate-nodeinfo.py \
+          mkdir -p /var/lib/freifunk-vpn/ffs/www/cgi-bin
+          ${derive-nodeinfo}/bin/derive-nodeinfo.py \
             --zip '${cfg.zip}' \
             --contact '${cfg.kontaktAdresse}' \
             --hostname '${cfg.hostname}' \
-            --nodeid "$(cat /var/lib/freifunk-vpn/ffs/nodeid)"
+            --nodeid "$(cat /var/lib/freifunk-vpn/ffs/nodeid)" \
+          > /var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo
+
+          echo "State generated."
+        '';
+      };
+      "ffs-httpd" = {
+        after = [ "network-interfaces.target" "ffs-generate-state.service" ];
+        wantedBy = [ "ffs-fastd.service" ];
+        script = ''
+          mkdir -p /var/lib/freifunk-vpn/ffs/www/cgi-bin
+          exec ${pkgs.darkhttpd}/bin/darkhttpd /var/lib/freifunk-vpn/ffs/www/ \
+            --no-listing \
+            --ipv6 \
+            --chroot \
+            --no-server-id
         '';
       };
       "ffs-fastd" = {
-        after = [ "ffs-generate-state.service" ];
+        after = [ "ffs-generate-state.service" "ffs-httpd.service" ];
         wantedBy = [ "ffs-batman.service" ];
         script = ''
           exec ${pkgs.fastd}/bin/fastd -c /etc/freifunk-vpn/ffs/fastd.conf
