@@ -1,0 +1,64 @@
+diff --git a/Onboarding/ffs-Onboarding.py b/Onboarding/ffs-Onboarding.py
+index 3704210..27e1198 100755
+--- a/Onboarding/ffs-Onboarding.py
++++ b/Onboarding/ffs-Onboarding.py
+@@ -75,6 +75,7 @@ from shapely.geometry import Point
+ from shapely.geometry.polygon import Polygon
+ from glob import glob
+ 
++import traceback
+ 
+ #----- Needed Data-Files -----
+ AccountFileName = '.Accounts.json'
+@@ -241,6 +242,7 @@ def getNodeFastdMAC(FastdStatusSocket):
+ 
+             FastdLiveStatus.close()
+ #            print('... Fastd-Data ->',StatusData)
++            print("Got " + str(len(StatusData)) + "byte from fastd status socket")
+ 
+             if StatusData != '':
+                 FastdStatusJson = json.loads(StatusData)
+@@ -250,9 +252,9 @@ def getNodeFastdMAC(FastdStatusSocket):
+                         if 'mac_addresses' in FastdStatusJson['peers'][PeerKey]['connection']:
+                             for FastdMAC in FastdStatusJson['peers'][PeerKey]['connection']['mac_addresses']:
+                                 break
+-        except:
++        except Exception as ex:
+             FastdMAC = None
+-            print('++ Error on getting fastd-MAC !!')
++            print('++ Error on getting fastd-MAC !! \n' + traceback.format_exc())
+ 
+     return FastdMAC
+ 
+@@ -1006,12 +1008,12 @@ def RegisterNode(PeerKey, NodeInfo, GitInfo, GitPath, DatabasePath, AccountsDict
+ #        print('>>> lock is set.')
+ 
+         #----- Handling registration -----
+-        DnsResolver = dns.resolver.Resolver()
+-        DnsServerIP = DnsResolver.query('%s.' % (AccountsDict['DNS']['Server']),'a')[0].to_text()
+-#        print('... DNS-Server IP =',DnsServerIP)
++        # DnsResolver = dns.resolver.Resolver()
++        # DnsServerIP = DnsResolver.query('%s.' % (AccountsDict['DNS']['Server']),'a')[0].to_text()
++#       #  print('... DNS-Server IP =',DnsServerIP)
+ 
+-        DnsKeyRing = dns.tsigkeyring.from_text( {AccountsDict['DNS']['ID'] : AccountsDict['DNS']['Key']} )
+-        DnsUpdate  = dns.update.Update(SEGASSIGN_DOMAIN, keyring = DnsKeyRing, keyname = AccountsDict['DNS']['ID'], keyalgorithm = 'hmac-sha512')
++        # DnsKeyRing = dns.tsigkeyring.from_text( {AccountsDict['DNS']['ID'] : AccountsDict['DNS']['Key']} )
++        # DnsUpdate  = dns.update.Update(SEGASSIGN_DOMAIN, keyring = DnsKeyRing, keyname = AccountsDict['DNS']['ID'], keyalgorithm = 'hmac-sha512')
+ 
+         GitRepo   = git.Repo(GitPath)
+         GitIndex  = GitRepo.index
+@@ -1086,10 +1088,10 @@ def RegisterNode(PeerKey, NodeInfo, GitInfo, GitPath, DatabasePath, AccountsDict
+                 if len(DnsUpdate.index) > 1:
+                     dns.query.tcp(DnsUpdate,DnsServerIP)
+ 
+-                MailBody = 'Automatic Onboarding (%s) in Segment %02d:\n\n#MAC: %s\n#Hostname: %s\nkey \"%s\";\n' % (Action,NewSegment,NodeInfo['MAC'],NodeInfo['Hostname'],PeerKey)
+-                print(MailBody)
++                # MailBody = 'Automatic Onboarding (%s) in Segment %02d:\n\n#MAC: %s\n#Hostname: %s\nkey \"%s\";\n' % (Action,NewSegment,NodeInfo['MAC'],NodeInfo['Hostname'],PeerKey)
++                # print(MailBody)
+ 
+-                __SendEmail('Onboarding of Node %s by ffs-Monitor' % (NodeInfo['Hostname']),MailBody,AccountsDict['KeyMail'])
++                # __SendEmail('Onboarding of Node %s by ffs-Monitor' % (NodeInfo['Hostname']),MailBody,AccountsDict['KeyMail'])
+ 
+     except:
+         print('!!! ERROR on registering Node:',Action)

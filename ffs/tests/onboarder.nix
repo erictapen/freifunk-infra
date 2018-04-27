@@ -7,12 +7,13 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "erictapen";
       repo = "FFS-Tools";
-      rev = "0209a15c9b8822b0cf80c35c728350fe79e93049";
-      sha256 = "0y6y8l4p0lcjq631ssy0k80gr9bmwzv1d6xvzcl6jxddnzx1nr9y";
+      rev = "d8e879058e8d6502990a190adc09b7a9e999733b";
+      sha256 = "0h3hzwgp1s59bv4qcbwb32y1xk2pjmsmz9dlk6bsi9j2djmcqc8h";
     };
 
     patches = [
       (import ./make-binary-paths-patch.nix { inherit pkgs; })
+      ./get-rid-off-impurity.patch
     ];
 
     pythonPath = with pkgs.python3Packages;[
@@ -30,9 +31,16 @@ let
     installPhase = ''
 
       mkdir -p $out/bin
-      cp Onboarding/ffs-Onboarding.py $out/bin
-      cp Onboarding/vpnXXXXX-on-establish.sh $out/bin
-      cp Onboarding/vpnXXXXX-on-verify.sh $out/bin
+      cp Onboarding/ffs-Onboarding.py $out/bin/
+      cp Onboarding/vpnXXXXX-on-establish.sh $out/bin/
+      cp Onboarding/vpnXXXXX-on-verify.sh $out/bin/
+
+      mkdir -p $out/database
+      cp database/.Accounts.json    $out/database/
+      cp database/Region2ZIP.json   $out/database/
+      cp database/ZipGrid.json      $out/database/
+      cp database/ZipLocations.json $out/database/ 
+
 
       wrapPythonPrograms
     '';
@@ -60,8 +68,43 @@ let
       secret "10f058c6744c3d3f5344521367fbb74faea131ccb7f4d3eb2411a61c7c18604d";
     '';
   };
-  # on verify    "${onboarding-repo}/vpnXXXXX-on-verify.sh";
-  # on establish "${onboarding-repo}/vpnXXXXX-on-establish.sh";
+
+  gitolite-sec-key-file = builtins.toFile "id_rsa" ''
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIEpQIBAAKCAQEAxbwyOR9U72bk0zKzmNLEvY8+ox0nfFNHC5m5OrS+fOzoqD0D
+    7QdAWXYhyOgV/VXS73B8LTxsOa7aIT72mIuFBaAOw4tdE9R+ktX5dqAEerG+932Z
+    8VarAF12XmFUc4GI1vOJbfgRIVgwyqH3zfoRCr6uYhJQJiOnpnL9+AAt0myoK/he
+    6QbWdo+kWhultHPXnPqpXE7e2S8UoENu37sqnVZtvjb1oXsMpPyAXdcek56XnHlI
+    8LmwKvaL3HB/qgZwCavpRwnZAoXKn8A0kl63uaL2LCi9McwLF6opSRfxrDH34moU
+    PH8qItwAs3aEqgoaQnlsUiECJ7NRGuW2HKjbyQIDAQABAoIBAG4oxZYbRXdGTI74
+    vSOTsHWmuw+ma1wRDRCCaLYzAbiZR5iKvYgstQXiETpbSfzj9mrcsOGGuwh7yBwj
+    dsBPYiFbJT59grJMfOOS/7K9vSEZqzk4KS5RyVyftRUphiH/dVvDO7ofLHP2LOCG
+    0YZYHWxuBLqwVySYUoshnymt99k1IpaDkz7Vgu4srZpzHfPz6Vi1BbeUYJavBHk3
+    f79vmusOn1lAbw33/wXVCrxvdHKq3saqpFrlRZrN0Onp9kC/rcIlQUL1KPdrgVxP
+    fxakRrcJKKU87ZQ6mQNGmPFkWlkLtuUR+qpa5GAVOgUSWz0jrWz7DXHoDjznfcT5
+    WEe9AG0CgYEA6/W1tJhdeijz/bn7Xo/qHRmV2NqW/ZUU+hSn/+Hn3tSEiWqD33DY
+    +culZzJe/D+lJc6lVlntqQI2SpkqXhcsOfIumYJdr5kDvaq/6M2Up2lD+9ssJs4D
+    MGguVXmfTiribuuCipK6cea5foata88GpkaK8WgJi36l7hwexDNIQccCgYEA1odl
+    t8gOee3nEa1voAyUksnNMzKT7iyGVybfNTIJxgioFgMNx4YwKA2gCvmZ/m2HhjJr
+    krAVWDg3Mcatz29YoGqq99sCKpmcdvzOWYKsrPi77PTdS8kQ0cgapvxF8JLcOQ/c
+    DDBA9bg8Uw4URCCnNGX/3ap3C2BZ3xGolUDA9e8CgYEApEhtm3Bd3Ni4j9Y2Qm9W
+    o64Vm2cNqz5p3XgWQ9zIMGesY3Rqnl4WY0y7O29hnKS/WeRXTxjLlFk67ZNYYSwn
+    Ga0Zbr3KdqDFbv98IB1KO4jZ0XeWdOoIZGKUp+RG2wiWoH2OZOalsvnd+k7QXXhF
+    e+0vfcZepuWlp3OipB3EWC8CgYEAoOGRSq3hDVd4Pi2O1Lwaf6qPFKINhkQlyx3/
+    rmkEI1tCkp9fqg3b922gZBqjfcauJ9mQCsW6fBpMaivRFQsvr73O0WmQylnAmQsl
+    xMLWtDEk3aMUgk0bK/eg5TGzUaMRPEnEf++AB8ZOlwqr8Bt8yTLlG1tHQ2TSgRNB
+    Fg0lqEkCgYEAnllS/EnuxBRaEKs1Tl6tC3Tg4qlFnGwyNY1TcE9xoIZ57sXJzbil
+    T4xmhq6q9ygXfws+Jdl+AvNC3qBY7Itb0hLa8Q+Npty4a/WNNlbBqsdZWP5RKDmY
+    vxvNoJfVbNI7YleJFzjWus8GWBK76ryGY3VH4GvKamU1wvrhWVTvRJI=
+    -----END RSA PRIVATE KEY-----
+  '';
+
+  gitolite-pub-key = ''
+    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDFvDI5H1TvZuTTMrOY0sS9jz6jHSd8U0cLmbk6tL587OioPQPtB0BZdiHI6BX9VdLvcHwtPGw5rtohPvaYi4UFoA7Di10T1H6S1fl2oAR6sb73fZnxVqsAXXZeYVRzgYjW84lt+BEhWDDKoffN+hEKvq5iElAmI6emcv34AC3SbKgr+F7pBtZ2j6RaG6W0c9ec+qlcTt7ZLxSgQ27fuyqdVm2+NvWhewyk/IBd1x6TnpeceUjwubAq9ovccH+qBnAJq+lHCdkChcqfwDSSXre5ovYsKL0xzAsXqilJF/GsMffiahQ8fyoi3ACzdoSqChpCeWxSIQIns1Ea5bYcqNvJ justin@maschine
+  '';
+
+  gitolite-pub-key-file = builtins.toFile "id_rsa.pub" gitolite-pub-key;
+  
 in
 {
 
@@ -76,6 +119,7 @@ in
   };
 
   environment.systemPackages = with pkgs;[
+    jq
     batctl
     fastd
     vim
@@ -83,18 +127,72 @@ in
     tmux
   ];
 
+  services.gitolite = {
+    enable = true;
+    adminPubkey = gitolite-pub-key;
+  };
+
+  services.openssh = {
+    enable = true;
+  };
+  # Disable interactive questions 
+  programs.ssh.extraConfig = ''
+    Host *
+      UserKnownHostsFile /dev/null
+      StrictHostKeyChecking no
+  '';
+ 
+
   systemd.services = {
     "fastd" = {
-      after = [ "network.target" ];
+      after = [ "openssh.service" "gitolite.service" "network.target" ];
       wantedBy = [ "batman.service" ];
       path = with pkgs;[
         procps
+        git
       ];
       preStart = ''
+        # This is stupid. TODO
+        sleep 20
+
+        # for debugging
+        rm -rf /root/gitolite-admin
+        rm -rf /var/freifunk/peers-ffs
+
         mkdir -p /var/freifunk/logs/
         mkdir -p /var/freifunk/peers-ffs/
+
         mkdir -p /var/freifunk/database/
+        cp ${builtins.toFile "Accounts.json" "{\"Git\": {\"URL\": \"git://gitolite@ffsonboarder:peers-ffs.git\"}}"} /var/freifunk/database/.Accounts.json
+        cp ${onboarder}/database/*.json         /var/freifunk/database/
+
         mkdir -p /var/freifunk/blacklist/
+        mkdir -p /root/.ssh
+        cat ${gitolite-sec-key-file} > /root/.ssh/id_rsa
+        cat ${gitolite-pub-key-file} > /root/.ssh/id_rsa.pub
+        chmod 600 /root/.ssh/id_rsa
+
+        export HOME="/root"
+        git clone gitolite@ffsonboarder:gitolite-admin.git /root/gitolite-admin
+        git config --global user.name "System Administrator"
+        git config --global user.email "root@domain.example"
+
+        # ADMIN_ID=$(find /root/gitolite-admin/keydir | grep admin | xargs basename)
+        cat <<EOF >> /root/gitolite-admin/conf/gitolite.conf
+
+        repo peers-ffs
+            RW+ = gitolite-admin
+        EOF
+        
+        git -C /root/gitolite-admin add -A
+        git -C /root/gitolite-admin commit -m "config"
+        git -C /root/gitolite-admin push origin master
+
+        git -C /var/freifunk/peers-ffs/ init
+        git -C /var/freifunk/peers-ffs/ commit --allow-empty -m "initial"
+        
+        git -C /var/freifunk/peers-ffs/ remote add origin gitolite@ffsonboarder:peers-ffs.git
+        git -C /var/freifunk/peers-ffs/ push -u origin master
       '';
       serviceConfig = {
         ExecStart = ''
