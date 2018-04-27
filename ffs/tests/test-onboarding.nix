@@ -25,8 +25,9 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
 
         services.freifunk-stuttgart = {
           enable = true;
+          hostname = "ffs-testnode";
           kontaktAdresse = "mail@example.org";
-          mac = "89:43:3d:c6:f6:09";
+          zip = "72074";
           fastd-peer-onboarder = ''
             key "6b02214cb4eab0ea90316e1ca5cb37039b4eae4665ccd291887456b7f3f7b73d";
             remote ipv4 "ffsonboarder" port 10299;

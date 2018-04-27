@@ -5,30 +5,20 @@ with lib;
 let
   cfg = config.services.freifunk-stuttgart;
 
-  fastdConfig = builtins.toFile "fastd.config" ''
-
-  '';
-
-  nodeid = builtins.replaceStrings [":"] [""] cfg.mac;
-
-  # TODO berechnen anhand von https://en.wikipedia.org/wiki/IPv6_address#Modified_EUI-64
-  ipv6small = "";
-  ipv6medium = "";
-
-  nodeinfo = builtins.toFile "nodeinfo.json" (builtins.toJSON {
-    software = {
-      firmware = {
-        # base = "gluon-v2016.2.7";
-        release ="1.3+2017-09-13-g.d722c26-s.b0e5e48";
-        isGluon = false;
-      };
-    };
-    owner = {
-      contact = cfg.kontaktAdresse;
-      #contact = "mail@example.org";
-    };
-    "node_id" = nodeid;
-  });
+  # nodeinfo = builtins.toFile "nodeinfo.json" (builtins.toJSON {
+  #   software = {
+  #     firmware = {
+  #       # base = "gluon-v2016.2.7";
+  #       release ="1.3+2017-09-13-g.d722c26-s.b0e5e48";
+  #       isGluon = false;
+  #     };
+  #   };
+  #   owner = {
+  #     contact = cfg.kontaktAdresse;
+  #     #contact = "mail@example.org";
+  #   };
+  #   "node_id" = nodeid;
+  # });
 
   # TODO: https://github.com/hopglass/node-respondd
   # respondd = pkgs.stdenv.mkDerivation {
@@ -45,7 +35,7 @@ let
   # };
 
   # Die Maximum Transfer Unit der fastd-Verbindung  
-  mtu = 1340;
+  fastd-mtu = 1340;
 
   # fastd config for the Onboarding peer
   fastd-peer-onboarder = builtins.toFile "offloader.conf" cfg.fastd-peer-onboarder;
@@ -55,7 +45,7 @@ let
     log level debug2;
 
     interface "ffs-mesh-vpn";
-    mtu ${builtins.toString mtu};
+    mtu ${builtins.toString fastd-mtu};
     include "/var/lib/freifunk-vpn/ffs/fastd_secret.conf";
     include peer "${fastd-peer-onboarder}" as "onboarder";
 
@@ -77,17 +67,22 @@ in
     services.freifunk-stuttgart = {
       enable = mkEnableOption "Freifunk Stuttgart VPN";
 
+      hostname = mkOption {
+        type = types.str;
+        example = "ffs-tue-fablab-neckar-alb";
+        description = "Name des Freifunkknoten.";
+      };
+
       kontaktAdresse = mkOption {
         type = types.str;
         example = "mail@example.org";
         description = "Kontaktmöglichkeit, mit der der/die \"Knotenbetreiber*in\" erreicht werden kann.";
       };
 
-      # See https://gluon.readthedocs.io/en/v2017.1.5/dev/mac_addresses.html for this
-      mac = mkOption {
+      zip= mkOption {
         type = types.str;
-        example = "89:43:3d:c6:f6:09";
-        description = "MAC-Adresse, die gleichzeitig auch Node-ID ist.";
+        example = "72074";
+        description = "Postleitzahl, in der der Node verortet werden soll. Dies ist wichtig für die Zuweisung des Segmentes";
       };
 
       fastd-peer-onboarder = mkOption {
@@ -97,7 +92,7 @@ in
           key "1af6a5d41d866823e5712e8d9af42080397ad52bdd8664a11ca94225629398a3";
           remote ipv4 "gw07.gw.freifunk-stuttgart.de" port 10299;
         '';
-        description = "fastd-Peer-Config, die Key und Ort des Onboarders angibt.";
+        description = "fastd-Peer-Config, die Key und Ort des Onboarders angibt. Muss eigentlich nur für Tests geändert werden.";
       };
 
     };
@@ -119,13 +114,13 @@ in
       enable = true;
       adminAddr = cfg.kontaktAdresse;
       servedFiles = [{
-        file = nodeinfo;
+        file = "/var/lib/freifunk-vpn/ffs/nodeinfo";
         urlPath = "/cgi-bin/nodeinfo";
       }];
-      listen = {
+      listen = [{
         ip = ":::";
-        port = "80";
-      };
+        port = 80;
+      }];
     };
 
     networking.firewall = {
@@ -140,40 +135,52 @@ in
       };
     };
 
-    # This service checks wether an already generated fastd secret is available
-    # and if not, generates one. Delete
-    # /var/lib/freifunk-vpn/ffs/fastd_secret.conf to force the generation of a
-    # new key.
+    # This service checks wether state like fastd secret and a node ID is
+    # available and if not, generates them. Delete /var/lib/freifunk-vpn/ffs to
+    # force the generation of a new state. Do NOT delete only certain parts of
+    # it, as inconsistent state may cause troubles with the onboarding process.
+    # 
+    # In order to make corrupting state more difficult, the nodeinfo JSON will
+    # be derived from the node ID every time the service starts.
     systemd.services = {
-      "ffs-fastd-generate-secret" = {
+      "ffs-generate-state" = {
         serviceConfig.Type = "oneshot";
         after = [ "network-interfaces.target" ];
-        wantedBy = [ "fastd.service" ];
+        wantedBy = [ "ffs-fastd.service" ];
         script = ''
           if [ ! -d /var/lib/freifunk-vpn/ffs/fastd_secret.conf ]; then
+            echo "Generate new fastd secret..."
             mkdir -p /var/lib/freifunk-vpn/ffs/
             FASTD_SEC=$(${pkgs.fastd}/bin/fastd --generate-key --machine-readable)
             echo "secret \"$FASTD_SEC\";" > /var/lib/freifunk-vpn/ffs/fastd_secret.conf
           fi
+          if [ ! -d /var/lib/freifunk-vpn/ffs/nodeid ]; then
+            echo "Generate new node ID..."
+            ${pkgs.xxd}/bin/xxd -l 6 -p /dev/random > /var/lib/freifunk-vpn/ffs/nodeid
+          fi
+          echo "Derive MAC and IPv6 addresses from nodeid..."
+          generate-nodeinfo.py \
+            --zip '${cfg.zip}' \
+            --contact '${cfg.kontaktAdresse}' \
+            --hostname '${cfg.hostname}' \
+            --nodeid "$(cat /var/lib/freifunk-vpn/ffs/nodeid)"
         '';
       };
-      "fastd" = {
-        after = [ "ffs-fastd-generate-secret.service" ];
-        wantedBy = [ "batman.service" ];
+      "ffs-fastd" = {
+        after = [ "ffs-generate-state.service" ];
+        wantedBy = [ "ffs-batman.service" ];
         script = ''
           exec ${pkgs.fastd}/bin/fastd -c /etc/freifunk-vpn/ffs/fastd.conf
         '';
       };
-      "batman" = {
-        after = [ "fastd.service" ];
+      "ffs-batman" = {
+        after = [ "ffs-fastd.service" ];
         wantedBy = [ "multi-user.target" ];
         script = ''
           ${pkgs.batctl}/bin/batctl -m batman interface add ffs-mesh-vpn
         '';
       };
     };
-
-    # networking.interfaces."ffs-mesh-vpn".macAddress = cfg.mac;
 
   };
 }
