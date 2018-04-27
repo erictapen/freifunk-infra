@@ -124,6 +124,12 @@ in
       }];
     };
 
+    networking.firewall = {
+      allowedTCPPorts = [
+        80 # HTTP
+      ];
+    };
+
     environment.etc = {
       "freifunk-vpn/ffs/fastd.conf" = {
         source = fastd-static-config;
