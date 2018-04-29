@@ -41,8 +41,10 @@ mkIf cfg.enable {
     nameValuePair
       "bat-${name}" 
       {
-        ipAddress = "172.16.200.255";
-        prefixLength = 24;
+        ipv4.addresses = [ {
+          address = "172.16.200.255";
+          prefixLength = 24;
+        } ];
       }
   );
 

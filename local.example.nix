@@ -1,6 +1,11 @@
 { config, pkgs, ... }:
 
 {
+
+  imports = [
+    ./default.nix
+  ];
+ 
   services.gateway = {
     enable = true;
     networks = {

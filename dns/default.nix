@@ -7,8 +7,8 @@ let
   dhcpCfg = config.services.gateway.dhcp;
   dhcpInterface = config.networking.interfaces."${dhcpCfg.interface}";
   getInterfaceAddresses = interface:
-    map (l: l.address) interface.ip4
-    ++ map (l: l.address) interface.ip6;
+    map (l: l.address) interface.ipv4.addresses
+    ++ map (l: l.address) interface.ipv4.addresses;
 in {
   options.services.gateway.dns = {
     enable = mkEnableOption "a DNS server";

@@ -56,11 +56,11 @@ in {
         getAddress = ip: head (splitString "/" ip);
         getPrefix  = ip: toInt (elemAt (splitString "/" ip) 1);
       in {
-      ip4 = [ {
+      ipv4.addresses = [ {
         address = (getGwIpAddress cfg.dhcp4Range);
         prefixLength = (getPrefix cfg.dhcp4Range);
       } ];
-      ip6 = [ {
+      ipv6.addresses = [ {
         address = (getGwIpAddress cfg.dhcp6Range);
         prefixLength = (getPrefix cfg.dhcp6Range);
       } ];
