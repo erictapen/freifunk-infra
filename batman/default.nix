@@ -16,7 +16,7 @@ in
 
 mkIf cfg.enable {
   boot = { 
-    extraModulePackages = with config.boot.kernelPackages; [ batman_adv netatop ];
+    extraModulePackages = with config.boot.kernelPackages; [ batman_adv ];
     kernelModules = [ "batman_adv" ];
   };
 
