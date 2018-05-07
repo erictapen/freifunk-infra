@@ -32,7 +32,7 @@ print(json.dumps({
   "software": {
     "autoupdater": {
       "branch": "stable",
-      "enabled": True
+      "enabled": False
     },
     "batman-adv": {
       "version": "2016.2",
@@ -61,18 +61,18 @@ print(json.dumps({
     "mac": mac,
   },
   "location": {
-    "zip": "72074"
+    "zip": args.ZIP
   },
   "owner": {
-    "contact": "anfrage@freifunk-neckaralb.de"
+    "contact": args.CONTACT
   },
   "system": {
     "site_code": "ffs"
   },
-  "node_id": "8416f9e8a8b8",
-  "hostname": "ffs-tue-elefantengehege",
+  "node_id": args.NODEID,
+  "hostname": args.HOSTNAME,
   "hardware": {
-    "model": "TP-Link TL-WR1043N/ND v4",
+    "model": "NixOS Node TODO",
     "nproc": 1
   }
 }))

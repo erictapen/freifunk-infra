@@ -59,6 +59,8 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
     # should only appear, if the "on verify" script exited with 0 and the
     # connection was established.
     $ffsonboarder->waitUntilSucceeds("ls /var/freifunk/logs/vpn*_established.log");
+
+    $ffsonboarder->waitUntilSucceeds("git -C /var/freifunk/peers-ffs/ log --oneline | grep 'Onboarding (NEW_NODE) of Peer .* in Segment ..'");
   '';
   
 

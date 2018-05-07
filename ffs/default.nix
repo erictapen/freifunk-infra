@@ -36,26 +36,43 @@ let
   # fastd config for the Onboarding peer
   fastd-peer-onboarder = builtins.toFile "offloader.conf" cfg.fastd-peer-onboarder;
 
+  # TODO for some reason, the node does not execute this script...
+  fastd-on-up = pkgs.writeTextFile {
+    name = "fastd-on-up";
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      ${pkgs.iproute}/bin/ip link set ffs-mesh-vpn address $(${pkgs.jq}/bin/jq -r ."network"."mac" /var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo)
+      for ipv6 in $(${pkgs.jq}/bin/jq -r .network.addresses[] /var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo)
+      do
+        ${pkgs.iproute}/bin/ip addr add $ipv6/64 dev ffs-mesh-vpn
+      done 
+    '';
+  };
+
   # The static part of the fastd config file. The dynamic part contains the VPN keys.
-  fastd-static-config = builtins.toFile "fastd.conf" ''
-    log level debug2;
+  fastd-static-config = pkgs.writeTextFile {
+    name = "fastd.conf"; 
+    text = ''
+      log level debug2;
 
-    interface "ffs-mesh-vpn";
-    mtu ${builtins.toString fastd-mtu};
-    include "/var/lib/freifunk-vpn/ffs/fastd_secret.conf";
-    include peer "${fastd-peer-onboarder}" as "onboarder";
+      interface "ffs-mesh-vpn";
+      mtu ${builtins.toString fastd-mtu};
+      include "/var/lib/freifunk-vpn/ffs/fastd_secret.conf";
+      include peer "${fastd-peer-onboarder}" as "onboarder";
 
-    # TODO remove?
-    # Support salsa2012+umac and null methods, prefer salsa2012+umac
-    method "salsa2012+umac";
-    method "null";
-    drop capabilities no;
+      # TODO remove?
+      # Support salsa2012+umac and null methods, prefer salsa2012+umac
+      method "salsa2012+umac";
+      method "null";
+      drop capabilities yes;
 
-    bind 0.0.0.0:10000;
+      bind 0.0.0.0:10000;
 
-    # Include peers from the directory 'peers'
-    # include peers from "peers";
-  '';
+      on up "${fastd-on-up}";
+    '';
+  };
+
 in
 
 {
@@ -104,6 +121,7 @@ in
     environment.systemPackages = with pkgs;[
       batctl
       fastd
+      jq
     ];
 
     networking.firewall = {
@@ -118,14 +136,15 @@ in
       };
     };
 
-    # This service checks wether state like fastd secret and a node ID is
-    # available and if not, generates them. Delete /var/lib/freifunk-vpn/ffs to
-    # force the generation of a new state. Do NOT delete only certain parts of
-    # it, as inconsistent state may cause troubles with the onboarding process.
-    # 
-    # In order to make corrupting state more difficult, the nodeinfo JSON will
-    # be derived from the node ID every time the service starts.
     systemd.services = {
+
+      # This service checks wether state like fastd secret and a node ID is
+      # available and if not, generates them. Delete /var/lib/freifunk-vpn/ffs
+      # to force the generation of a new state. Do NOT delete only certain
+      # parts of it, as inconsistent state may cause troubles with the
+      # onboarding process.
+      # In order to make corrupting state more difficult, the nodeinfo JSON
+      # will be derived from the node ID every time the service starts.
       "ffs-generate-state" = {
         serviceConfig = {
           Type = "oneshot";
@@ -159,14 +178,18 @@ in
       "ffs-httpd" = {
         after = [ "network-interfaces.target" "ffs-generate-state.service" ];
         wantedBy = [ "ffs-fastd.service" ];
-        script = ''
+        preStart = ''
           mkdir -p /var/lib/freifunk-vpn/ffs/www/cgi-bin
-          exec ${pkgs.darkhttpd}/bin/darkhttpd /var/lib/freifunk-vpn/ffs/www/ \
-            --no-listing \
-            --ipv6 \
-            --chroot \
-            --no-server-id
         '';
+        serviceConfig = {
+          ExecStart = ''
+            ${pkgs.darkhttpd}/bin/darkhttpd /var/lib/freifunk-vpn/ffs/www/ \
+              --no-listing \
+              --ipv6 \
+              --chroot \
+              --no-server-id
+          '';
+        };
       };
       "ffs-fastd" = {
         after = [ "ffs-generate-state.service" "ffs-httpd.service" ];

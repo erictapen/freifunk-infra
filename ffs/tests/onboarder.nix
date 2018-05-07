@@ -14,6 +14,7 @@ let
     patches = [
       (import ./make-binary-paths-patch.nix { inherit pkgs; })
       ./get-rid-off-impurity.patch
+      ./pipe-fastd-on-establish-log-to-stdout.patch
     ];
 
     pythonPath = with pkgs.python3Packages;[
@@ -104,6 +105,13 @@ let
   '';
 
   gitolite-pub-key-file = builtins.toFile "id_rsa.pub" gitolite-pub-key;
+
+  peers-ffs-repo = pkgs.fetchFromGitHub {
+    owner = "freifunk-stuttgart";
+    repo = "peers-ffs";
+    rev = "4b013a0c4e9a20dab004c0030b680221de566a25";
+    sha256 = "1zph2ilfwabfkpjx1s5a83f1gqdinhi3ldm996s1gcdqhw4ml6b9";
+  };
   
 in
 {
@@ -161,7 +169,7 @@ in
         mkdir -p /var/freifunk/peers-ffs/
 
         mkdir -p /var/freifunk/database/
-        cp ${builtins.toFile "Accounts.json" "{\"Git\": {\"URL\": \"git://gitolite@ffsonboarder:peers-ffs.git\"}}"} /var/freifunk/database/.Accounts.json
+        cp ${builtins.toFile "Accounts.json" "{\"Git\": {\"URL\": \"gitolite@ffsonboarder:peers-ffs.git\"}}"} /var/freifunk/database/.Accounts.json
         cp ${onboarder}/database/*.json         /var/freifunk/database/
 
         mkdir -p /var/freifunk/blacklist/
@@ -187,7 +195,10 @@ in
         git -C /root/gitolite-admin push origin master
 
         git -C /var/freifunk/peers-ffs/ init
-        git -C /var/freifunk/peers-ffs/ commit --allow-empty -m "initial"
+        cp -r ${peers-ffs-repo}/* /var/freifunk/peers-ffs/
+        chmod -R +w /var/freifunk/peers-ffs
+        git -C /var/freifunk/peers-ffs/ add -A
+        git -C /var/freifunk/peers-ffs/ commit --quiet --allow-empty -m "initial"
         
         git -C /var/freifunk/peers-ffs/ remote add origin gitolite@ffsonboarder:peers-ffs.git
         git -C /var/freifunk/peers-ffs/ push -u origin master
