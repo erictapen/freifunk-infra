@@ -3,3 +3,5 @@ secrets
 deploy*
 *.swp
 *.jpg
+*.svg
+*.png
