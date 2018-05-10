@@ -191,7 +191,11 @@ in
         ${pkgs.git}/bin/git -C /root/gitolite-admin push origin master
 
         ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ init
-        cp -r ${peers-ffs-repo}/vpn17 /var/freifunk/peers-ffs/
+
+        mkdir -p /var/freifunk/peers-ffs/vpn17/peers/
+        cp -r ${peers-ffs-repo}/vpn17/regions   /var/freifunk/peers-ffs/vpn17/
+        cp -r ${peers-ffs-repo}/vpn17/zip-areas /var/freifunk/peers-ffs/vpn17/
+
         chmod -R +w /var/freifunk/peers-ffs
         ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ add -A
         ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ commit --quiet --allow-empty -m "initial"
