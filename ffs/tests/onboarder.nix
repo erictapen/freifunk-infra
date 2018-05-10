@@ -117,6 +117,7 @@ in
 {
 
   networking.firewall = {
+    # fastd
     allowedTCPPorts = [ 10299 ];
     allowedUDPPorts = [ 10299 ];
   };

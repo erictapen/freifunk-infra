@@ -8,7 +8,7 @@ State sollte sich möglichst nur in '/var/lib/freifunk-vpn/ffs/' befinden.
 
 # 1. Ist der Node schon registriert?
 
-Frage per DNS den AAAA Record für die IP `ffs-${MAC ohne ':'}-${Erste 12 Zeichen des fastd-pubkeys}.segassign.freifunk-stuttgart.de` ab. Wenn es einen record gibt, zeigt der letzte Block der IPv6 das Segment an.
+Frage per DNS den AAAA Record für die IP `ffs-${nodeid}-${Erste 12 Zeichen des fastd-pubkeys}.segassign.freifunk-stuttgart.de` ab. Wenn es einen record gibt, zeigt der letzte Block der IPv6 das Segment an.
 
 Beispiel:
 
@@ -34,14 +34,16 @@ Baue fastd-Verbindung zum Onboarder auf `gw07.gw.freifunk-stuttgart.de` auf.
 Die ständig über HTTP verfügbare Seite `/cgi-bin/nodeinfo` beinhaltet ein JSON mit dieser Form:
 
 ```json
-"software": {
-  "firmware": {
-     # base = "gluon-v2016.2.7";
-     "release": "1.3+2017-09-13-g.d722c26-s.b0e5e48",
-     "isGluon" = false
-  },
-  "owner": {
-    "contact": "mail@example.com"
+{
+  "software": {
+    "firmware": {
+       # base = "gluon-v2016.2.7";
+       "release": "1.3+2017-09-13-g.d722c26-s.b0e5e48",
+       "isGluon" = false
+    },
+    "owner": {
+      "contact": "mail@example.com"
+    }
   }
 }
 ```
@@ -116,9 +118,8 @@ Hier zum Vergleich eine echte Gluon-Antwort nach erfolgreichem Onboarding:
 
 TODO:
 
-In einem zweiten Schritt prüft der Onboarder, ob eine laufende Batman-Instanz auch wirklich die angegebene MAC hat. Am liebsten würde ich ja eine zufällige MAC angeben, aber ich weiß nicht, wie batman die schluckt...
-
-Alternativ müsste man halt batctl die MAC generieren lassen und denn dynamisch in die nodeinfo einbringen (Oh Graus). 
+* Stelle sicher, dass die aus der node\_id abgleitete MAC wirklich an das Interface vergeben wurde.
+* Schränke die Rechte aller Services auf das nötigste ein (Eigene user, vllt. Privilegien droppen).
 
 
 

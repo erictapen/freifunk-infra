@@ -175,6 +175,7 @@ in
           echo "State generated."
         '';
       };
+
       "ffs-httpd" = {
         after = [ "network-interfaces.target" "ffs-generate-state.service" ];
         wantedBy = [ "ffs-fastd.service" ];
@@ -191,6 +192,7 @@ in
           '';
         };
       };
+
       "ffs-fastd" = {
         after = [ "ffs-generate-state.service" "ffs-httpd.service" ];
         wantedBy = [ "ffs-batman.service" ];
@@ -198,6 +200,7 @@ in
           exec ${pkgs.fastd}/bin/fastd -c /etc/freifunk-vpn/ffs/fastd.conf
         '';
       };
+
       "ffs-batman" = {
         after = [ "ffs-fastd.service" ];
         wantedBy = [ "multi-user.target" ];
