@@ -6,7 +6,7 @@ let
 
     # Use the input supplied by hydra, so we can test against changes
     # automatically.
-    src = <onboarding>;
+    src = <ffs-tools>;
     # src = pkgs.fetchFromGitHub {
     #   owner = "FFS-Roland";
     #   repo = "FFS-Tools";
