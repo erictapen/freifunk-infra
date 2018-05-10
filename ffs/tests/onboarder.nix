@@ -129,14 +129,15 @@ in
     kernelModules = [ "batman_adv" ];
   };
 
-  environment.systemPackages = with pkgs;[
-    jq
-    batctl
-    fastd
-    vim
-    onboarder
-    tmux
-  ];
+  # for debugging the test
+  # environment.systemPackages = with pkgs;[
+  #   jq
+  #   batctl
+  #   fastd
+  #   vim
+  #   onboarder
+  #   tmux
+  # ];
 
   services.gitolite = {
     enable = true;
@@ -155,6 +156,12 @@ in
  
 
   systemd.services = {
+
+    # Setups all necessary things for the onboarding process to run:
+    #
+    # * A git remote where it can push too (like GitHub)
+    # * Geojson files for segment validation
+    # * directory structure
     "prepare-state-dirs" = {
       after = [ "sshd.service" "gitolite-init.service" "network.target" ];
       wantedBy = [ "fastd.service" ];
@@ -213,6 +220,7 @@ in
       '';
     };
 
+    # fastd service a node connects to
     "fastd" = {
       after = [ "prepare-state-dirs.service" ];
       wantedBy = [ "batman.service" ];
@@ -228,6 +236,8 @@ in
       };
     };
  
+    # Batman service. Is only used by the onboarder to have a second way of
+    # node validation.
     "batman" = {
       after = [ "fastd.service" ];
       wantedBy = [ "multi-user.target" ];
