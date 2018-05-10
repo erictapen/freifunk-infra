@@ -45,8 +45,8 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
     # This would fail:
     # $ffsonboarder->waitForUnit("batman.service");
 
-    $ffsonboarder->waitUntilSucceeds("batctl -m batman interface");
-    $ffsonboarder->fail("batctl interface");
+    $ffsonboarder->waitUntilSucceeds("${pkgs.batctl}/bin/batctl -m batman interface");
+    $ffsonboarder->fail("${pkgs.batctl}/bin/batctl interface");
 
     $ffsNode->start;
     $ffsNode->waitForFile("/var/lib/freifunk-vpn/ffs/fastd_secret.conf");
@@ -67,7 +67,7 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
     $ffsonboarder->waitForFile("/var/freifunk/peers-ffs/vpn17/peers/ffs-$nodeid");
 
     # Wait for the Onboarder to commit the key
-    $ffsonboarder->waitUntilSucceeds("git -C /var/freifunk/peers-ffs/ log --oneline | grep 'Onboarding (NEW_NODE) of Peer .* in Segment ..'");
+    $ffsonboarder->waitUntilSucceeds("${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ log --oneline | grep 'Onboarding (NEW_NODE) of Peer .* in Segment ..'");
   '';
   
 
