@@ -1,0 +1,45 @@
+commit 17fc19edf5051a5931875c9c8dda78175f2934c8
+Author: Justin Humm <justin.humm@posteo.de>
+Date:   Sat Apr 21 22:54:38 2018 +0200
+
+    Onboarding: use /usr/bin/env instead of hard coded path
+
+diff --git a/Onboarding/ffs-Onboarding.py b/Onboarding/ffs-Onboarding.py
+index 57387a2..3704210 100755
+--- a/Onboarding/ffs-Onboarding.py
++++ b/Onboarding/ffs-Onboarding.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python3
++#!/usr/bin/env python3
+ 
+ ###########################################################################################
+ #                                                                                         #
+diff --git a/Onboarding/vpnXXXXX-on-establish.sh b/Onboarding/vpnXXXXX-on-establish.sh
+index c37f217..5fe57d0 100755
+--- a/Onboarding/vpnXXXXX-on-establish.sh
++++ b/Onboarding/vpnXXXXX-on-establish.sh
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/usr/bin/env bash
+ 
+ ###########################################################################################
+ #                                                                                         #
+@@ -52,7 +52,7 @@ date >> $LOGFILE
+ 
+ echo Starting new ffs-Onboarding Process on $INTERFACE from $PEER_ADDRESS ... >> $LOGFILE
+ 
+-/usr/local/bin/ffs-Onboarding.py --fastd $INTERFACE --batman bat${INTERFACE:3:5} --pid $FASTD_PID --peerkey $PEER_KEY --gitrepo $PEERGITREPO --data $DATAPATH --blacklist $BLACKLIST >> $LOGFILE
++/usr/bin/env ffs-Onboarding.py --fastd $INTERFACE --batman bat${INTERFACE:3:5} --pid $FASTD_PID --peerkey $PEER_KEY --gitrepo $PEERGITREPO --data $DATAPATH --blacklist $BLACKLIST >> $LOGFILE
+ 
+ if [ $? != 0 ]; then
+     date >> $LOGFILE
+diff --git a/Onboarding/vpnXXXXX-on-verify.sh b/Onboarding/vpnXXXXX-on-verify.sh
+index d4b6cda..8fffb0f 100755
+--- a/Onboarding/vpnXXXXX-on-verify.sh
++++ b/Onboarding/vpnXXXXX-on-verify.sh
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/usr/bin/env bash
+ 
+ ###########################################################################################
+ #                                                                                         #

@@ -4,17 +4,24 @@ let
   onboarder = pkgs.stdenv.mkDerivation {
     name = "onboarder";
 
-    src = pkgs.fetchFromGitHub {
-      owner = "erictapen";
-      repo = "FFS-Tools";
-      rev = "72cd7c337270064476de4bf6151deb137ed6aaca";
-      sha256 = "01yh5czsjfkmj7dm2mraq5xsbcafzmin0wbj3b2z10961af2yinz";
-    };
+    # Use the input supplied by hydra, so we can test against changes
+    # automatically.
+    src = <onboarding>;
+    # src = pkgs.fetchFromGitHub {
+    #   owner = "FFS-Roland";
+    #   repo = "FFS-Tools";
+    #   rev = "master";
+    #   sha256 = "06cnzgqr9cx20l5man96nh993yck9fh00g9gd017v7hfp8rbm8ba";
+    # };
 
     patches = [
       (import ./make-binary-paths-patch.nix { inherit pkgs; })
-      ./get-rid-off-impurity.patch
-      ./pipe-fastd-on-establish-log-to-stdout.patch
+      # Delete some actions of ffs-Onboarding.py that take effect on the
+      # outside world, e.g. sending emails, changing DNS records
+      ./patches/get-rid-off-impurity.patch
+      # Use /usr/bin/env cmd instead of /usr/bin/cmd. Maybe I bring that
+      # upstream one day.
+      ./patches/use-env-instead-of-hardcoded-paths.patch
     ];
 
     pythonPath = with pkgs.python3Packages;[
