@@ -53,13 +53,20 @@ import <nixpkgs/nixos/tests/make-test.nix> ({ pkgs, ...}:
     $ffsNode->waitForFile("/var/lib/freifunk-vpn/ffs/nodeid");
     $ffsNode->waitForFile("/var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo");
 
+    # Read nodeid from Node
+    my $nodeid = $ffsNode->succeed("cat /var/lib/freifunk-vpn/ffs/nodeid");
+
     # Make sure the fastd connection is up. As the connection itself is
     # supposed to terminate after a while, it is not easy to test it by itself,
     # so we check, wether a certain log file appears. The *_established.log
     # should only appear, if the "on verify" script exited with 0 and the
     # connection was established.
-    $ffsonboarder->waitUntilSucceeds("ls /var/freifunk/logs/vpn*_established.log");
+    $ffsonboarder->waitForFile("/var/freifunk/logs/vpn*_established.log");
 
+    # Wait for the key file to appear in the git repository
+    $ffsonboarder->waitForFile("/var/freifunk/peers-ffs/vpn17/peers/ffs-$nodeid");
+
+    # Wait for the Onboarder to commit the key
     $ffsonboarder->waitUntilSucceeds("git -C /var/freifunk/peers-ffs/ log --oneline | grep 'Onboarding (NEW_NODE) of Peer .* in Segment ..'");
   '';
   

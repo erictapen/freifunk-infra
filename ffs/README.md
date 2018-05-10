@@ -120,8 +120,6 @@ TODO:
 
 * Stelle sicher, dass die aus der node\_id abgleitete MAC wirklich an das Interface vergeben wurde.
 * Schränke die Rechte aller Services auf das nötigste ein (Eigene user, vllt. Privilegien droppen).
-
-
-
+* Commits auf FFS-Tools sollen einen Hydrarun triggern
 
 Sobald die fastd-Verbindung von der Gegenseite terminiert wurde kann mit Schritt 2 geschaut werden, ob das Onboarding geklappt hat.

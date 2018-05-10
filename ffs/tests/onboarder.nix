@@ -153,15 +153,11 @@ in
  
 
   systemd.services = {
-    "fastd" = {
+    "prepare-state-dirs" = {
       after = [ "sshd.service" "gitolite-init.service" "network.target" ];
-      wantedBy = [ "batman.service" ];
-      path = with pkgs;[
-        procps
-        git
-        onboarder
-      ];
-      preStart = ''
+      wantedBy = [ "fastd.service" ];
+      serviceConfig.Type = "oneshot";
+      script = ''
         # for debugging
         rm -rf /root/gitolite-admin
         rm -rf /var/freifunk/peers-ffs
@@ -180,36 +176,44 @@ in
         chmod 600 /root/.ssh/id_rsa
 
         export HOME="/root"
-        git clone gitolite@ffsonboarder:gitolite-admin.git /root/gitolite-admin
-        git config --global user.name "System Administrator"
-        git config --global user.email "root@domain.example"
+        ${pkgs.git}/bin/git clone gitolite@ffsonboarder:gitolite-admin.git /root/gitolite-admin
+        ${pkgs.git}/bin/git config --global user.name "System Administrator"
+        ${pkgs.git}/bin/git config --global user.email "root@domain.example"
 
-        # ADMIN_ID=$(find /root/gitolite-admin/keydir | grep admin | xargs basename)
         cat <<EOF >> /root/gitolite-admin/conf/gitolite.conf
 
         repo peers-ffs
             RW+ = gitolite-admin
         EOF
         
-        git -C /root/gitolite-admin add -A
-        git -C /root/gitolite-admin commit -m "config"
-        git -C /root/gitolite-admin push origin master
+        ${pkgs.git}/bin/git -C /root/gitolite-admin add -A
+        ${pkgs.git}/bin/git -C /root/gitolite-admin commit -m "config"
+        ${pkgs.git}/bin/git -C /root/gitolite-admin push origin master
 
-        git -C /var/freifunk/peers-ffs/ init
-        cp -r ${peers-ffs-repo}/* /var/freifunk/peers-ffs/
+        ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ init
+        cp -r ${peers-ffs-repo}/vpn17 /var/freifunk/peers-ffs/
         chmod -R +w /var/freifunk/peers-ffs
-        git -C /var/freifunk/peers-ffs/ add -A
-        git -C /var/freifunk/peers-ffs/ commit --quiet --allow-empty -m "initial"
+        ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ add -A
+        ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ commit --quiet --allow-empty -m "initial"
         
-        git -C /var/freifunk/peers-ffs/ remote add origin gitolite@ffsonboarder:peers-ffs.git
-        git -C /var/freifunk/peers-ffs/ push -u origin master
+        ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ remote add origin gitolite@ffsonboarder:peers-ffs.git
+        ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ push -u origin master
       '';
+    };
+
+    "fastd" = {
+      after = [ "prepare-state-dirs.service" ];
+      wantedBy = [ "batman.service" ];
+      path = with pkgs;[
+        git
+        procps
+        onboarder
+      ];
       serviceConfig = {
         ExecStart = ''
           ${pkgs.fastd}/bin/fastd --config ${fastd-config}
         '';
       };
-      # serviceConfig.Type = "oneshot";
     };
  
     "batman" = {
