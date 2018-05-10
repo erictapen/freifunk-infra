@@ -30,18 +30,13 @@ let
     dontBuild = true;
 
     installPhase = ''
-
       mkdir -p $out/bin
       cp Onboarding/ffs-Onboarding.py $out/bin/
       cp Onboarding/vpnXXXXX-on-establish.sh $out/bin/
       cp Onboarding/vpnXXXXX-on-verify.sh $out/bin/
 
       mkdir -p $out/database
-      cp database/.Accounts.json    $out/database/
-      cp database/Region2ZIP.json   $out/database/
-      cp database/ZipGrid.json      $out/database/
-      cp database/ZipLocations.json $out/database/ 
-
+      cp database/*.json $out/database/
 
       wrapPythonPrograms
     '';
@@ -158,48 +153,54 @@ in
       wantedBy = [ "fastd.service" ];
       serviceConfig.Type = "oneshot";
       script = ''
-        # for debugging
+        # clear state (only for debugging)
         rm -rf /root/gitolite-admin
-        rm -rf /var/freifunk/peers-ffs
+        rm -rf /var/freifunk
 
+        # create state skeleton
         mkdir -p /var/freifunk/logs/
         mkdir -p /var/freifunk/peers-ffs/
-
         mkdir -p /var/freifunk/database/
-        cp ${builtins.toFile "Accounts.json" "{\"Git\": {\"URL\": \"gitolite@ffsonboarder:peers-ffs.git\"}}"} /var/freifunk/database/.Accounts.json
-        cp ${onboarder}/database/*.json         /var/freifunk/database/
-
         mkdir -p /var/freifunk/blacklist/
+
+        # configure gitolite remote (usually there is a GitHub remote configured here)
+        cp ${builtins.toFile "Accounts.json" "{\"Git\": {\"URL\": \"gitolite@ffsonboarder:peers-ffs.git\"}}"} /var/freifunk/database/.Accounts.json
+        cp ${onboarder}/database/*.json /var/freifunk/database/
+
+        # bring pre-generated SSH keys into place
         mkdir -p /root/.ssh
         cat ${gitolite-sec-key-file} > /root/.ssh/id_rsa
         cat ${gitolite-pub-key-file} > /root/.ssh/id_rsa.pub
         chmod 600 /root/.ssh/id_rsa
 
+        # Prepare gitconfig
         export HOME="/root"
-        ${pkgs.git}/bin/git clone gitolite@ffsonboarder:gitolite-admin.git /root/gitolite-admin
         ${pkgs.git}/bin/git config --global user.name "System Administrator"
         ${pkgs.git}/bin/git config --global user.email "root@domain.example"
 
+        # Clone the gitolite config repo, configure peers-ffs, push the config
+        ${pkgs.git}/bin/git clone gitolite@ffsonboarder:gitolite-admin.git /root/gitolite-admin
         cat <<EOF >> /root/gitolite-admin/conf/gitolite.conf
-
         repo peers-ffs
             RW+ = gitolite-admin
         EOF
-        
         ${pkgs.git}/bin/git -C /root/gitolite-admin add -A
         ${pkgs.git}/bin/git -C /root/gitolite-admin commit -m "config"
         ${pkgs.git}/bin/git -C /root/gitolite-admin push origin master
 
-        ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ init
-
+        # Prepare the parts of peers-ffs that we need. 17 is the number of 
+        # the segment, our node is supposed to be put in. It is very likely,
+        # that this changes in the future and will break the test, but I have
+        # no better solution at the moment.
         mkdir -p /var/freifunk/peers-ffs/vpn17/peers/
         cp -r ${peers-ffs-repo}/vpn17/regions   /var/freifunk/peers-ffs/vpn17/
         cp -r ${peers-ffs-repo}/vpn17/zip-areas /var/freifunk/peers-ffs/vpn17/
-
         chmod -R +w /var/freifunk/peers-ffs
+
+        # Initialize, add, commit and push to gitolite remote
+        ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ init
         ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ add -A
         ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ commit --quiet --allow-empty -m "initial"
-        
         ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ remote add origin gitolite@ffsonboarder:peers-ffs.git
         ${pkgs.git}/bin/git -C /var/freifunk/peers-ffs/ push -u origin master
       '';
