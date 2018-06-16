@@ -41,8 +41,8 @@ let
     name = "fastd-on-up";
     executable = true;
     text = ''
-      #!/usr/bin/env bash
-      ${pkgs.iproute}/bin/ip link set ffs-mesh-vpn address $(${pkgs.jq}/bin/jq -r ."network"."mac" /var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo)
+      #! ${pkgs.bash}/bin/bash
+      ${pkgs.iproute}/bin/ip link set dev ffs-mesh-vpn address $(${pkgs.jq}/bin/jq -r ."network"."mac" /var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo)
       for ipv6 in $(${pkgs.jq}/bin/jq -r .network.addresses[] /var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo)
       do
         ${pkgs.iproute}/bin/ip addr add $ipv6/64 dev ffs-mesh-vpn
@@ -70,6 +70,21 @@ let
       bind 0.0.0.0:10000;
 
       on up "${fastd-on-up}";
+    '';
+  };
+
+  generate-nodeid = pkgs.writeTextFile {
+    name = "generate-nodeid.py"; 
+    executable = true;
+    text = ''
+      #!${pkgs.python3}/bin/python
+      import random
+
+      id = random.SystemRandom().getrandbits(6*8)
+      # nodeid is also used as MAC address. That address is supposed to be
+      # unicast and local.
+      id &= 0b111111001111111111111111111111111111111111111111
+      print('{:x}'.format(id).zfill(12))
     '';
   };
 
@@ -161,7 +176,7 @@ in
           fi
           if [ ! -d /var/lib/freifunk-vpn/ffs/nodeid ]; then
             echo "Generate new node ID..."
-            ${pkgs.xxd}/bin/xxd -l 6 -p /dev/random > /var/lib/freifunk-vpn/ffs/nodeid
+            ${generate-nodeid} > /var/lib/freifunk-vpn/ffs/nodeid
           fi
           echo "Derive MAC and IPv6 addresses from nodeid..."
           mkdir -p /var/lib/freifunk-vpn/ffs/www/cgi-bin
