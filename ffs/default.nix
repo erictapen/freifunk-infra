@@ -5,10 +5,14 @@ with lib;
 let
   cfg = config.services.freifunk-stuttgart;
 
+  fastd-ifname-onboarding = "ffs-mesh-vpn-onboarding";
+
+  fastd-ifname = "ffs-mesh-vpn";
+
   # TODO: https://github.com/hopglass/node-respondd
   # respondd = pkgs.stdenv.mkDerivation {
   #   name = "respondd";
-  #   
+  #
   #   src = (pkgs.fetchFromGitHub {
   #     owner = "freifunk-gluon";
   #     repo = "packages";
@@ -23,40 +27,39 @@ let
     name = "derive-nodeinfo";
     buildInputs = with pkgs; [ python3 ];
     dontBuild = true;
-    src = ./derive-nodeinfo; 
+    src = ./derive-nodeinfo;
     installPhase = ''
       mkdir -p $out/bin
       cp derive-nodeinfo.py $out/bin/
     '';
-  }; 
+  };
 
-  # Die Maximum Transfer Unit der fastd-Verbindung  
+  # Die Maximum Transfer Unit der fastd-Verbindung
   fastd-mtu = 1340;
 
   # fastd config for the Onboarding peer
   fastd-peer-onboarder = builtins.toFile "offloader.conf" cfg.fastd-peer-onboarder;
 
-  # TODO for some reason, the node does not execute this script...
   fastd-on-up = pkgs.writeTextFile {
     name = "fastd-on-up";
     executable = true;
     text = ''
       #! ${pkgs.bash}/bin/bash
-      ${pkgs.iproute}/bin/ip link set dev ffs-mesh-vpn address $(${pkgs.jq}/bin/jq -r ."network"."mac" /var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo)
+      ${pkgs.iproute}/bin/ip link set dev ${fastd-ifname-onboarding} address $(${pkgs.jq}/bin/jq -r ."network"."mac" /var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo)
       for ipv6 in $(${pkgs.jq}/bin/jq -r .network.addresses[] /var/lib/freifunk-vpn/ffs/www/cgi-bin/nodeinfo)
       do
         ${pkgs.iproute}/bin/ip addr add $ipv6/64 dev ffs-mesh-vpn
-      done 
+      done
     '';
   };
 
   # The static part of the fastd config file. The dynamic part contains the VPN keys.
   fastd-static-config = pkgs.writeTextFile {
-    name = "fastd.conf"; 
+    name = "fastd.conf";
     text = ''
       log level debug2;
 
-      interface "ffs-mesh-vpn";
+      interface "${fastd-ifname-onboarding}";
       mtu ${builtins.toString fastd-mtu};
       include "/var/lib/freifunk-vpn/ffs/fastd_secret.conf";
       include peer "${fastd-peer-onboarder}" as "onboarder";
@@ -70,11 +73,13 @@ let
       bind 0.0.0.0:10000;
 
       on up "${fastd-on-up}";
+
+      persist interface no;
     '';
   };
 
   generate-nodeid = pkgs.writeTextFile {
-    name = "generate-nodeid.py"; 
+    name = "generate-nodeid.py";
     executable = true;
     text = ''
       #!${pkgs.python3}/bin/python
@@ -220,7 +225,7 @@ in
         after = [ "ffs-fastd.service" ];
         wantedBy = [ "multi-user.target" ];
         script = ''
-          ${pkgs.batctl}/bin/batctl -m batman interface add ffs-mesh-vpn
+          ${pkgs.batctl}/bin/batctl -m batman interface add ${fastd-ifname-onboarding}
         '';
       };
     };
