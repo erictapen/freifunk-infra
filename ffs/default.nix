@@ -138,6 +138,7 @@ in
       kernelModules = [ "batman_adv" ];
     };
 
+    # TODO is this necessary?
     environment.systemPackages = with pkgs;[
       batctl
       fastd
@@ -170,6 +171,7 @@ in
           Type = "oneshot";
           RemainAfterExit = true;
         };
+        unitConfig.ConditionPathExists = "!/var/lib/freifunk-vpn/ffs/onboarded";
         after = [ "network-interfaces.target" ];
         wantedBy = [ "ffs-fastd.service" ];
         script = ''
@@ -196,7 +198,10 @@ in
         '';
       };
 
+      # Provides nodeinfo via HTTP. Darkhttpd is used as a Webserver, as atm we
+      # only need to serve a static website.
       "ffs-httpd" = {
+        unitConfig.ConditionPathExists = "!/var/lib/freifunk-vpn/ffs/onboarded";
         after = [ "network-interfaces.target" "ffs-generate-state.service" ];
         wantedBy = [ "ffs-fastd.service" ];
         preStart = ''
@@ -214,6 +219,7 @@ in
       };
 
       "ffs-fastd" = {
+        unitConfig.ConditionPathExists = "!/var/lib/freifunk-vpn/ffs/onboarded";
         after = [ "ffs-generate-state.service" "ffs-httpd.service" ];
         wantedBy = [ "ffs-batman.service" ];
         script = ''
@@ -222,6 +228,7 @@ in
       };
 
       "ffs-batman" = {
+        unitConfig.ConditionPathExists = "!/var/lib/freifunk-vpn/ffs/onboarded";
         after = [ "ffs-fastd.service" ];
         wantedBy = [ "multi-user.target" ];
         script = ''
