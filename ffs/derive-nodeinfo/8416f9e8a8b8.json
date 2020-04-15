@@ -1,0 +1,63 @@
+{
+  "software": {
+    "autoupdater": {
+      "branch": "stable",
+      "enabled": true
+    },
+    "batman-adv": {
+      "version": "2016.2",
+      "compat": 15
+    },
+    "fastd": {
+      "version": "v18",
+      "enabled": true
+    },
+    "firmware": {
+      "base": "gluon-v2016.2.7",
+      "release": "1.3+2017-09-13-g.d722c26-s.b0e5e48"
+    },
+    "status-page": {
+      "api": 1
+    }
+  },
+  "network": {
+    "addresses": [
+      "fd21:711::8616:f9ff:fee8:a8b8",
+      "fd21:b4dc:4b17:0:8616:f9ff:fee8:a8b8",
+      "fe80::8616:f9ff:fee8:a8b8"
+    ],
+    "mesh": {
+      "bat0": {
+        "interfaces": {
+          "wireless": [
+            "0a:6b:b2:1f:40:81",
+            "0a:6b:b2:1f:40:82"
+          ],
+          "tunnel": [
+            "0a:6b:b2:1f:40:87"
+          ],
+          "other": [
+            "0a:6b:b2:1f:40:83"
+          ]
+        }
+      }
+    },
+    "mac": "84:16:f9:e8:a8:b8"
+  },
+  "location": {
+    "zip": "72074"
+  },
+  "owner": {
+    "contact": "anfrage@freifunk-neckaralb.de"
+  },
+  "system": {
+    "site_code": "ffs"
+  },
+  "node_id": "8416f9e8a8b8",
+  "hostname": "ffs-tue-elefantengehege",
+  "hardware": {
+    "model": "TP-Link TL-WR1043N/ND v4",
+    "nproc": 1
+  }
+}
+

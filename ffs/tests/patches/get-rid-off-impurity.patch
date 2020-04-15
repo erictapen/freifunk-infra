@@ -1,0 +1,143 @@
+diff --git a/Onboarding/ffs-Onboarding.py b/Onboarding/ffs-Onboarding.py
+index 3704210..b83ddfe 100755
+--- a/Onboarding/ffs-Onboarding.py
++++ b/Onboarding/ffs-Onboarding.py
+@@ -75,6 +75,7 @@ from shapely.geometry import Point
+ from shapely.geometry.polygon import Polygon
+ from glob import glob
+ 
++import traceback
+ 
+ #----- Needed Data-Files -----
+ AccountFileName = '.Accounts.json'
+@@ -240,7 +241,8 @@ def getNodeFastdMAC(FastdStatusSocket):
+                 StatusData += tmpData
+ 
+             FastdLiveStatus.close()
+-#            print('... Fastd-Data ->',StatusData)
++            print('... Fastd-Data ->',StatusData)
++            print("Got " + str(len(StatusData)) + "byte from fastd status socket")
+ 
+             if StatusData != '':
+                 FastdStatusJson = json.loads(StatusData)
+@@ -250,9 +252,9 @@ def getNodeFastdMAC(FastdStatusSocket):
+                         if 'mac_addresses' in FastdStatusJson['peers'][PeerKey]['connection']:
+                             for FastdMAC in FastdStatusJson['peers'][PeerKey]['connection']['mac_addresses']:
+                                 break
+-        except:
++        except Exception as ex:
+             FastdMAC = None
+-            print('++ Error on getting fastd-MAC !!')
++            print('++ Error on getting fastd-MAC !! \n' + traceback.format_exc())
+ 
+     return FastdMAC
+ 
+@@ -575,7 +577,7 @@ def GetBatmanNodeMAC(BatmanVpnMAC,BatmanIF):
+         try:
+             BatctlTG = subprocess.run(BatctlCmd, stdout=subprocess.PIPE)
+             BatctlResult = BatctlTG.stdout.decode('utf-8')
+-#            print('>>>',BatctlResult)
++            print('>>>',BatctlResult)
+ 
+             for BatctlLine in BatctlResult.split('\n'):
+                 BatctlInfo = BatctlLine.replace('(',' ').replace(')',' ').split()
+@@ -919,7 +921,7 @@ def WriteNodeKeyFile(KeyFileName, NodeInfo, GitFixSeg, PeerKey):
+ def RegisterNode(PeerKey, NodeInfo, GitInfo, GitPath, DatabasePath, AccountsDict):
+ 
+     DnsKeyRing = None
+-    DnsUpdate  = None
++    # DnsUpdate  = None
+ 
+     NeedCommit = False
+     Action     = None
+@@ -1006,18 +1008,18 @@ def RegisterNode(PeerKey, NodeInfo, GitInfo, GitPath, DatabasePath, AccountsDict
+ #        print('>>> lock is set.')
+ 
+         #----- Handling registration -----
+-        DnsResolver = dns.resolver.Resolver()
+-        DnsServerIP = DnsResolver.query('%s.' % (AccountsDict['DNS']['Server']),'a')[0].to_text()
+-#        print('... DNS-Server IP =',DnsServerIP)
++        # DnsResolver = dns.resolver.Resolver()
++        # DnsServerIP = DnsResolver.query('%s.' % (AccountsDict['DNS']['Server']),'a')[0].to_text()
++#       #  print('... DNS-Server IP =',DnsServerIP)
+ 
+-        DnsKeyRing = dns.tsigkeyring.from_text( {AccountsDict['DNS']['ID'] : AccountsDict['DNS']['Key']} )
+-        DnsUpdate  = dns.update.Update(SEGASSIGN_DOMAIN, keyring = DnsKeyRing, keyname = AccountsDict['DNS']['ID'], keyalgorithm = 'hmac-sha512')
++        # DnsKeyRing = dns.tsigkeyring.from_text( {AccountsDict['DNS']['ID'] : AccountsDict['DNS']['Key']} )
++        # DnsUpdate  = dns.update.Update(SEGASSIGN_DOMAIN, keyring = DnsKeyRing, keyname = AccountsDict['DNS']['ID'], keyalgorithm = 'hmac-sha512')
+ 
+         GitRepo   = git.Repo(GitPath)
+         GitIndex  = GitRepo.index
+         GitOrigin = GitRepo.remotes.origin
+ 
+-        if GitRepo.is_dirty() or len(GitRepo.untracked_files) > 0 or DnsUpdate is None:
++        if GitRepo.is_dirty() or len(GitRepo.untracked_files) > 0 :#or DnsUpdate is None:
+             print('!! The Git Repository and/or DNS are not clean - cannot register Node!')
+ 
+         else:  # Git and DNS ready for registering node ...
+@@ -1031,7 +1033,7 @@ def RegisterNode(PeerKey, NodeInfo, GitInfo, GitPath, DatabasePath, AccountsDict
+                     if Action == 'REMOVE_NODE':
+                         GitIndex.remove([OldPeerFile])
+                         os.remove(os.path.join(GitPath,OldPeerFile))
+-                        if GitSegment > 0:  DnsUpdate.delete(OldPeerDnsName,'AAAA')
++                        #if GitSegment > 0:  DnsUpdate.delete(OldPeerDnsName,'AAAA')
+                         print('*** Removed Node due to Inconsistency: vpn%02d / ffs-%s \"%s\"' % (GitSegment,NodeID,NodeInfo['Hostname']))
+                         NeedCommit = True
+ 
+@@ -1048,17 +1050,17 @@ def RegisterNode(PeerKey, NodeInfo, GitInfo, GitPath, DatabasePath, AccountsDict
+                         GitIndex.add([NewPeerFile])
+                         NeedCommit = True
+ 
+-                        if NewPeerDnsName != OldPeerDnsName:
+-                            if GitSegment > 0:  DnsUpdate.delete(OldPeerDnsName,'AAAA')
+-                            if NewSegment > 0:  DnsUpdate.add(NewPeerDnsName, 120,'AAAA',NewPeerDnsIPv6)
+-                        else:
+-                            if NewSegment > 0:
+-                                if GitSegment > 0:
+-                                    DnsUpdate.replace(NewPeerDnsName, 120,'AAAA',NewPeerDnsIPv6)
+-                                else:
+-                                    DnsUpdate.add(NewPeerDnsName, 120,'AAAA',NewPeerDnsIPv6)
+-                            elif GitSegment > 0:  # no DNS for Legacy-Segment
+-                                DnsUpdate.delete(OldPeerDnsName,'AAAA')
++                        # if NewPeerDnsName != OldPeerDnsName:
++                        #     if GitSegment > 0:  DnsUpdate.delete(OldPeerDnsName,'AAAA')
++                        #     if NewSegment > 0:  DnsUpdate.add(NewPeerDnsName, 120,'AAAA',NewPeerDnsIPv6)
++                        # else:
++                        #     if NewSegment > 0:
++                        #         if GitSegment > 0:
++                        #             DnsUpdate.replace(NewPeerDnsName, 120,'AAAA',NewPeerDnsIPv6)
++                        #         else:
++                        #             DnsUpdate.add(NewPeerDnsName, 120,'AAAA',NewPeerDnsIPv6)
++                        #     elif GitSegment > 0:  # no DNS for Legacy-Segment
++                        #         DnsUpdate.delete(OldPeerDnsName,'AAAA')
+                 else:
+                     print('... Key File was already changed by other process.')
+ 
+@@ -1066,7 +1068,7 @@ def RegisterNode(PeerKey, NodeInfo, GitInfo, GitPath, DatabasePath, AccountsDict
+                 if not os.path.exists(os.path.join(GitPath,NewPeerFile)):
+                     WriteNodeKeyFile(os.path.join(GitPath,NewPeerFile), NodeInfo, GitFixSeg, PeerKey)
+                     GitIndex.add([NewPeerFile])
+-                    if NewSegment > 0:  DnsUpdate.add(NewPeerDnsName, 120,'AAAA',NewPeerDnsIPv6)
++                    # if NewSegment > 0:  DnsUpdate.add(NewPeerDnsName, 120,'AAAA',NewPeerDnsIPv6)
+                     print('*** New Node: vpn%02d / ffs-%s = \"%s\" (%s...)' % (NewSegment,NodeInfo['NodeID'],NodeInfo['Hostname'],PeerKey[:12]))
+                     NeedCommit = True
+ 
+@@ -1083,13 +1085,13 @@ def RegisterNode(PeerKey, NodeInfo, GitInfo, GitPath, DatabasePath, AccountsDict
+                 GitOrigin.push()
+                 print()
+ 
+-                if len(DnsUpdate.index) > 1:
+-                    dns.query.tcp(DnsUpdate,DnsServerIP)
++                # if len(DnsUpdate.index) > 1:
++                #     dns.query.tcp(DnsUpdate,DnsServerIP)
+ 
+-                MailBody = 'Automatic Onboarding (%s) in Segment %02d:\n\n#MAC: %s\n#Hostname: %s\nkey \"%s\";\n' % (Action,NewSegment,NodeInfo['MAC'],NodeInfo['Hostname'],PeerKey)
+-                print(MailBody)
++                # MailBody = 'Automatic Onboarding (%s) in Segment %02d:\n\n#MAC: %s\n#Hostname: %s\nkey \"%s\";\n' % (Action,NewSegment,NodeInfo['MAC'],NodeInfo['Hostname'],PeerKey)
++                # print(MailBody)
+ 
+-                __SendEmail('Onboarding of Node %s by ffs-Monitor' % (NodeInfo['Hostname']),MailBody,AccountsDict['KeyMail'])
++                # __SendEmail('Onboarding of Node %s by ffs-Monitor' % (NodeInfo['Hostname']),MailBody,AccountsDict['KeyMail'])
+ 
+     except:
+         print('!!! ERROR on registering Node:',Action)

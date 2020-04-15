@@ -1,0 +1,52 @@
+#!/bin/sh
+ME=$(basename $0)
+if [ $(ps | grep -c "$ME") -gt 4 ]; then
+  logger -s -t $ME "started twice"
+  exit 1
+fi
+if [ ! -d "/proc/$(cat /var/run/fastd.mesh_vpn.pid)" ]; then
+  logger -t $ME "fastd not running"
+  exit 0
+fi
+if [ "$(uci get fastd.mesh_vpn_backbone.auto_segment)" = "0" ]; then
+  logger -t $ME "auto_segment disabled"
+  exit 0
+fi
+
+NODEID=$(uci get network.bat0.macaddr | sed 's/://g')
+PUBKEY=$(/etc/init.d/fastd show_key mesh_vpn | cut -c1-12)
+SEGINFO=$(nslookup ffs-${NODEID}-${PUBKEY}.segassign.freifunk-stuttgart.de  [::1]:54 | grep "2001:2:0:711::")
+if [ -z "$SEGINFO" ]; then
+  logger -t $ME "Node not registered"
+  exit 1
+fi
+SEGINFO=${SEGINFO/Address 1: 2001:2:0:711::/}
+SEGMENT=$(echo $SEGINFO |cut -d' ' -f1 | cut -d':' -f2)
+let PORT=SEGMENT+10200
+if [ $PORT -le 10200 ]; then
+  logger -t $ME "Invalid Segment"
+  exit 1
+fi
+
+SEGNUM=$(printf "%02d" $SEGMENT)
+CHANGED=0
+for i in `seq 1 10`;
+do
+  GW=$(printf "gw%02d" $i)
+  OLDPEER=$(uci get fastd.mesh_vpn_backbone_peer_${GW}.remote)
+  NEWPEER="\"${GW}s${SEGNUM}.gw.freifunk-stuttgart.de\" port $PORT"
+
+  if [ "$NEWPEER" != "$OLDPEER" ]; then
+    uci set fastd.mesh_vpn_backbone_peer_${GW}.remote="$NEWPEER"
+    CHANGED=1
+  fi
+done
+
+if [ "$CHANGED" = "1" ]; then
+  /sbin/ifdown client
+  /etc/init.d/fastd restart
+  /sbin/ifup client
+  logger -t $ME "Set Segment: $SEGNUM"
+else
+  logger -t $ME "No changes"
+fi
