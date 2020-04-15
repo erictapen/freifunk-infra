@@ -3,6 +3,8 @@ title: Readme for NixOS Gateway
 status: experimental
 ---
 
+**This project is abandoned, but it might serve as a reference for future projects. Feel free to contact `mail@erictapen.name` if you have questions about the code.**
+
 This repository enables NixOS for functioning as a gateway.
 
 # Deployment
